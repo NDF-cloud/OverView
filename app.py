@@ -2187,13 +2187,13 @@ def rapports():
                 CASE
                     WHEN COUNT(*) > 0 THEN (COUNT(CASE WHEN termine = TRUE THEN 1 END) * 100.0 / COUNT(*))
                     ELSE 0
-                END
+                END as taux_reussite
             FROM taches WHERE user_id = ?
         ''')
         cur.execute(sql_taux_reussite, (user_id,))
         result = cur.fetchone()
         if is_postgres:
-            taux_reussite = result['case'] if result and result['case'] else 0
+            taux_reussite = result['taux_reussite'] if result and result['taux_reussite'] else 0
         else:
             taux_reussite = result[0] if result and result[0] else 0
 
@@ -2285,13 +2285,13 @@ def export_pdf():
                 CASE
                     WHEN COUNT(*) > 0 THEN (COUNT(CASE WHEN termine = TRUE THEN 1 END) * 100.0 / COUNT(*))
                     ELSE 0
-                END
+                END as taux_reussite
             FROM taches WHERE user_id = ?
         ''')
         cur.execute(sql_taux_reussite, (user_id,))
         result = cur.fetchone()
         if is_postgres:
-            taux_reussite = result['case'] if result and result['case'] else 0
+            taux_reussite = result['taux_reussite'] if result and result['taux_reussite'] else 0
         else:
             taux_reussite = result[0] if result and result[0] else 0
 
@@ -2526,13 +2526,13 @@ def export_excel():
                 CASE
                     WHEN COUNT(*) > 0 THEN (COUNT(CASE WHEN termine = TRUE THEN 1 END) * 100.0 / COUNT(*))
                     ELSE 0
-                END
+                END as taux_reussite
             FROM taches WHERE user_id = ?
         ''')
         cur.execute(sql_taux_reussite, (user_id,))
         result = cur.fetchone()
         if is_postgres:
-            taux_reussite = result['case'] if result and result['case'] else 0
+            taux_reussite = result['taux_reussite'] if result and result['taux_reussite'] else 0
         else:
             taux_reussite = result[0] if result and result[0] else 0
 
