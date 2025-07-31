@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>{% if evenement %}Modifier{% else %}Ajouter{% endif %} un événement - OverView</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
+            margin: 0;
+        }
+        .container { width: 100%; max-width: 600px; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 { color: #005f73; margin: 0; }
+        .header-info small { color: #555; }
+        .header-buttons a {
+            text-decoration: none;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 50%;
+            font-size: 1.5em;
+            line-height: 1;
+            margin-left: 10px;
+        }
+        .back-btn { background-color: #6c757d; font-size: 1.2em; padding: 12px; }
+
+        /* Navigation tabs */
+        .nav-tabs {
+            display: flex;
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 5px;
+            margin: 30px 0 30px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .nav-tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            text-decoration: none;
+            color: #555;
+            border-radius: 6px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        .nav-tab:hover { background-color: rgba(0, 109, 119, 0.1); }
+        .nav-tab.active { background-color: #fd7e14; color: white; }
+
+        /* Formulaire */
+        .form-container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        /* Styles pour les champs de date */
+        .form-group input[type="date"] {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23fd7e14' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            padding-right: 40px;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: #fd7e14;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+            flex: 1;
+            text-align: center;
+        }
+        .btn-primary {
+            background-color: #fd7e14;
+            color: white;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.8;
+            transform: translateY(-1px);
+        }
+        .color-picker {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+        .color-option.selected {
+            border-color: #333;
+        }
+
+        .flash-messages { margin: 15px 0; text-align: center; }
+        .alert-error { background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; }
+        .alert-success { background-color: #d4edda; color: #155724; padding: 10px; border-radius: 5px; }
+
+        /* Mode sombre */
+        body.dark-mode { background-color: #121212; color: #e0e0e0; }
+        .dark-mode .header, .dark-mode .nav-tabs, .dark-mode .form-container {
+            background-color: #1e1e1e;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+        .dark-mode h1 { color: #76c7c0; }
+        .dark-mode .header-info small { color: #aaa; }
+        .dark-mode .nav-tab { color: #aaa; }
+        .dark-mode .nav-tab:hover { background-color: rgba(118, 199, 192, 0.1); }
+        .dark-mode .nav-tab.active { background-color: #76c7c0; color: #121212; }
+        .dark-mode .form-group label { color: #e0e0e0; }
+        .dark-mode .form-group input, .dark-mode .form-group textarea, .dark-mode .form-group select {
+            background-color: #2d2d2d;
+            border-color: #444;
+            color: #e0e0e0;
+        }
+        .dark-mode .form-group input:focus, .dark-mode .form-group textarea:focus, .dark-mode .form-group select:focus {
+            border-color: #76c7c0;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { padding: 0; }
+            .header { flex-direction: column; align-items: center; text-align: center; padding: 15px; }
+            .header-info { margin-bottom: 10px; }
+            .header-info h1 { font-size: 1.8em; }
+            .header-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+            .header-buttons a { margin: 0 4px; padding: 8px 12px; font-size: 1.2em; }
+            .nav-tabs { flex-direction: column; margin: 15px 0; }
+            .form-container { padding: 20px; }
+            .form-row { flex-direction: column; }
+            .form-actions { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <script> if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode'); </script>
+    <div class="container">
+        <div class="header">
+            <div class="header-info">
+                <h1>{% if evenement %}Modifier{% else %}Ajouter{% endif %} un événement</h1>
+                <small>Connecté en tant que : <strong>{{ session['username'] }}</strong></small>
+            </div>
+            <div class="header-buttons">
+                                 <a href="{{ url_for('calendrier') }}" class="back-btn" title="Retour à l'agenda">←</a>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <div class="nav-tab active" style="pointer-events: none;">Agenda</div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-messages">
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <div class="form-container">
+            <form method="post" action="{{ url_for('sauvegarder_evenement', evenement_id=evenement.id if evenement else None) }}">
+                <div class="form-group">
+                    <label for="titre">Titre de l'événement *</label>
+                    <input type="text" id="titre" name="titre" value="{{ evenement.titre if evenement else '' }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="3" placeholder="Description optionnelle de l'événement...">{{ evenement.description if evenement else '' }}</textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="date_debut">Date de début *</label>
+                        <input type="date" id="date_debut" name="date_debut" value="{{ evenement.date_debut if evenement else '' }}" required>
+                        <small style="color: #666; font-size: 0.9em;">Cliquez sur l'icône du calendrier pour sélectionner une date</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="date_fin">Date de fin (optionnel)</label>
+                        <input type="date" id="date_fin" name="date_fin" value="{{ evenement.date_fin if evenement else '' }}">
+                        <small style="color: #666; font-size: 0.9em;">Laissez vide pour un événement d'une journée</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="heure_debut">Heure de début (optionnel)</label>
+                        <input type="time" id="heure_debut" name="heure_debut" value="{{ evenement.heure_debut if evenement else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="heure_fin">Heure de fin (optionnel)</label>
+                        <input type="time" id="heure_fin" name="heure_fin" value="{{ evenement.heure_fin if evenement else '' }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="lieu">Lieu (optionnel)</label>
+                    <input type="text" id="lieu" name="lieu" value="{{ evenement.lieu if evenement else '' }}" placeholder="Adresse, salle, etc...">
+                </div>
+
+                <div class="form-group">
+                    <label>Couleur de l'événement</label>
+                    <div class="color-picker">
+                        <div class="color-option selected" style="background-color: #fd7e14;" data-color="#fd7e14"></div>
+                        <div class="color-option" style="background-color: #28a745;" data-color="#28a745"></div>
+                        <div class="color-option" style="background-color: #dc3545;" data-color="#dc3545"></div>
+                        <div class="color-option" style="background-color: #ffc107;" data-color="#ffc107"></div>
+                        <div class="color-option" style="background-color: #17a2b8;" data-color="#17a2b8"></div>
+                        <div class="color-option" style="background-color: #6f42c1;" data-color="#6f42c1"></div>
+                        <div class="color-option" style="background-color: #006d77;" data-color="#006d77"></div>
+                        <div class="color-option" style="background-color: #e83e8c;" data-color="#e83e8c"></div>
+                    </div>
+                    <input type="hidden" id="couleur" name="couleur" value="{{ evenement.couleur if evenement else '#fd7e14' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="rappel_minutes">Rappel (optionnel)</label>
+                    <select id="rappel_minutes" name="rappel_minutes">
+                        <option value="0" {% if not evenement or evenement.rappel_minutes == 0 %}selected{% endif %}>Aucun rappel</option>
+                        <option value="5" {% if evenement and evenement.rappel_minutes == 5 %}selected{% endif %}>5 minutes avant</option>
+                        <option value="15" {% if evenement and evenement.rappel_minutes == 15 %}selected{% endif %}>15 minutes avant</option>
+                        <option value="30" {% if evenement and evenement.rappel_minutes == 30 %}selected{% endif %}>30 minutes avant</option>
+                        <option value="60" {% if evenement and evenement.rappel_minutes == 60 %}selected{% endif %}>1 heure avant</option>
+                        <option value="1440" {% if evenement and evenement.rappel_minutes == 1440 %}selected{% endif %}>1 jour avant</option>
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                                         <a href="{{ url_for('calendrier') }}" class="btn btn-secondary">Annuler</a>
+                    <button type="submit" class="btn btn-primary">
+                        {% if evenement %}Mettre à jour{% else %}Créer{% endif %} l'événement
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Gestion du sélecteur de couleur
+        const colorOptions = document.querySelectorAll('.color-option');
+        const colorInput = document.getElementById('couleur');
+
+        // Initialiser la couleur sélectionnée
+        const currentColor = colorInput.value || '#fd7e14';
+        colorOptions.forEach(option => {
+            if (option.dataset.color === currentColor) {
+                option.classList.add('selected');
+            } else {
+                option.classList.remove('selected');
+            }
+        });
+
+        colorOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                colorOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                colorInput.value = option.dataset.color;
+            });
+        });
+
+        // Amélioration des champs de date
+        const dateDebut = document.getElementById('date_debut');
+        const dateFin = document.getElementById('date_fin');
+
+        // Définir la date minimale à aujourd'hui
+        const today = new Date().toISOString().split('T')[0];
+        dateDebut.min = today;
+        dateFin.min = today;
+
+        // Synchroniser la date de fin avec la date de début
+        dateDebut.addEventListener('change', () => {
+            if (dateDebut.value) {
+                dateFin.min = dateDebut.value;
+                if (dateFin.value && dateFin.value < dateDebut.value) {
+                    dateFin.value = dateDebut.value;
+                }
+            }
+        });
+
+        // Validation de la date de fin
+        dateFin.addEventListener('change', () => {
+            if (dateFin.value && dateDebut.value && dateFin.value < dateDebut.value) {
+                alert('La date de fin ne peut pas être antérieure à la date de début.');
+                dateFin.value = dateDebut.value;
+            }
+        });
+
+        // Fonction pour récupérer les paramètres de l'URL
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        // Pré-remplir la date si elle est passée en paramètre
+        const dateParam = getUrlParameter('date');
+        if (dateParam) {
+            dateDebut.value = dateParam;
+        }
+    </script>
+</body>
+</html>

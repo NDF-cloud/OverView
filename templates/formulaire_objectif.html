@@ -4,27 +4,240 @@
     <meta charset="UTF-8">
     <title>{% if objectif %}Modifier l'objectif{% else %}Créer un nouvel objectif{% endif %}</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f7f6; color: #333; display: flex; justify-content: center; padding: 20px; transition: background-color 0.3s, color 0.3s; }
-        .container { width: 100%; max-width: 600px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 30px; }
-        h1, h2 { color: #005f73; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
-        form div { margin-bottom: 15px; }
-        form label { display: block; margin-bottom: 5px; font-weight: bold; }
-        form input { display: block; width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 1em; box-sizing: border-box; }
-        form button { padding: 12px 20px; margin-top: 10px; cursor: pointer; width: 100%; background-color: #006d77; color: white; border: none; border-radius: 5px; font-size: 1.1em; }
-        .back-link { display: block; margin-bottom: 20px; }
-        .password-field { border-top: 1px solid #eee; padding-top: 15px; margin-top: 20px; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            color: white;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: white;
+        }
+        .header-info small { color: rgba(255,255,255,0.8); }
+        .header-buttons a {
+            text-decoration: none;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 50%;
+            font-size: 1.2em;
+            line-height: 1;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+        .header-buttons a:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1);
+        }
+        .nav-tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 5px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+        .nav-tab {
+            flex: 1;
+            padding: 12px 20px;
+            text-align: center;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .nav-tab:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .nav-tab.active {
+            background: rgba(255, 255, 255, 0.3);
+            font-weight: bold;
+        }
+        .form-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        h1, h2 { color: white; border-bottom: 2px solid rgba(255,255,255,0.3); padding-bottom: 10px; }
+        form div { margin-bottom: 20px; }
+        form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #005f73;
+            font-size: 1.1em;
+        }
+        form input {
+            display: block;
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            font-size: 1em;
+            box-sizing: border-box;
+            transition: all 0.3s;
+            background: rgba(255,255,255,0.9);
+        }
+        form input:focus {
+            outline: none;
+            border-color: #006d77;
+            box-shadow: 0 0 0 3px rgba(0,109,119,0.1);
+            transform: translateY(-2px);
+        }
+        form button {
+            padding: 15px 30px;
+            margin-top: 20px;
+            cursor: pointer;
+            width: 100%;
+            background: linear-gradient(135deg, #006d77 0%, #005f73 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2em;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 2px 10px rgba(0,109,119,0.2);
+        }
+        form button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,109,119,0.3);
+        }
+        .password-field {
+            border-top: 2px solid #006d77;
+            padding-top: 20px;
+            margin-top: 25px;
+            background: linear-gradient(135deg, rgba(0,109,119,0.05) 0%, rgba(0,95,115,0.05) 100%);
+            padding: 20px;
+            border-radius: 12px;
+        }
         .flash-messages { margin-bottom: 15px; text-align: center; }
         .alert-error { background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; }
-        body.dark-mode { background-color: #121212; color: #e0e0e0; }
-        .dark-mode .container { background-color: #1e1e1e; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+        .alert-success { background-color: #d4edda; color: #155724; padding: 10px; border-radius: 5px; }
+
+        /* Mode sombre */
+        body.dark-mode {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: #e0e0e0;
+        }
+        .dark-mode .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+        .dark-mode .nav-tabs {
+            background: rgba(30,30,30,0.95);
+        }
+        .dark-mode .form-container {
+            background: rgba(30,30,30,0.95);
+        }
         .dark-mode h1, .dark-mode h2 { color: #76c7c0; }
+        .dark-mode form label { color: #76c7c0; }
+        .dark-mode form input {
+            background: rgba(45,45,45,0.9);
+            border-color: #444;
+            color: #e0e0e0;
+        }
+        .dark-mode form input:focus {
+            border-color: #76c7c0;
+            box-shadow: 0 0 0 3px rgba(118,199,192,0.1);
+        }
+        .dark-mode form button {
+            background: linear-gradient(135deg, #76c7c0 0%, #5a9ca4 100%);
+            box-shadow: 0 4px 15px rgba(118,199,192,0.3);
+        }
+        .dark-mode .password-field {
+            background: linear-gradient(135deg, rgba(118,199,192,0.1) 0%, rgba(90,156,164,0.1) 100%);
+            border-color: #76c7c0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .form-container {
+                padding: 20px;
+            }
+
+            form input,
+            form select {
+                font-size: 16px; /* Évite le zoom sur iOS */
+            }
+
+            form div {
+                margin-bottom: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .form-container {
+                padding: 15px;
+            }
+
+            form input,
+            form select {
+                padding: 12px;
+            }
+
+            form button {
+                padding: 15px;
+                font-size: 1.1em;
+            }
+
+            .password-field {
+                padding: 15px;
+            }
+        }
     </style>
 </head>
 <body>
     <script> if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode'); </script>
     <div class="container">
-        <a href="{{ url_for('index') }}" class="back-link">← Retour</a>
-        <h1>{% if objectif %}Modifier l'objectif{% else %}Créer un nouvel objectif{% endif %}</h1>
+        <div class="header">
+            <h1>💰 {% if objectif %}Modifier l'objectif{% else %}Créer un nouvel objectif{% endif %}</h1>
+            <p>Gérez vos objectifs d'épargne</p>
+            <div style="margin-top: 15px;">
+                <a href="{{ url_for('index') }}" style="background: rgba(255,255,255,0.2); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; margin: 0 10px; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">← Retour</a>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <a href="{{ url_for('index') }}" class="nav-tab active">Épargne</a>
+        </div>
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             <div class="flash-messages">
@@ -34,25 +247,38 @@
             </div>
           {% endif %}
         {% endwith %}
-        <form action="{{ url_for('sauvegarder_objectif', objectif_id=objectif.id if objectif else None) }}" method="post">
+        <div class="form-container">
+            <h2 style="color: white; margin-bottom: 20px;">{% if objectif %}Modifier l'objectif{% else %}Créer un nouvel objectif{% endif %}</h2>
+            <form action="{{ url_for('sauvegarder_objectif', objectif_id=objectif.id if objectif else None) }}" method="post">
             <div>
                 <label for="nom">Nom de l'objectif</label>
                 <input type="text" id="nom" name="nom" value="{{ objectif.nom if objectif else '' }}" required>
             </div>
             <div>
-                <label for="montant_cible">Montant cible (XAF)</label>
-                <input type="number" id="montant_cible" name="montant_cible" value="{{ objectif.montant_cible if objectif else '' }}" required>
+                <label for="montant_cible">Montant cible</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="number" id="montant_cible" name="montant_cible" value="{{ objectif.montant_cible if objectif else '' }}" required style="flex: 1;">
+                    <select name="devise_cible" id="devise-cible-select" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+                        {% for code, nom in get_all_currencies().items() %}
+                        <option value="{{ code }}" {% if code == session.get('default_currency', 'XAF') %}selected{% endif %}>{{ code }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <small style="color: #666; font-size: 0.9em;">
+                    💡 Le montant sera automatiquement converti vers votre devise système ({{ get_currency_symbol() }}) si différent
+                </small>
             </div>
             <div>
                 <label for="date_limite">Date limite</label>
                 <input type="date" id="date_limite" name="date_limite" value="{{ objectif.date_limite if objectif else '' }}">
             </div>
             <div class="password-field">
-                <label for="password">Confirmez avec votre mot de passe</label>
+                <label for="password">{{ t('please_confirm_with_password') }}</label>
                 <input type="password" name="password" id="password" required>
             </div>
             <button type="submit">Sauvegarder</button>
         </form>
+        </div>
     </div>
 </body>
 </html>
