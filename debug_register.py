@@ -24,15 +24,29 @@ def test_database_connection():
         # Test de création de table
         cur = conn.cursor()
         try:
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS users (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    username TEXT UNIQUE NOT NULL,
-                    password TEXT NOT NULL,
-                    security_question TEXT,
-                    security_answer TEXT
-                )
-            """)
+            # Utiliser la bonne syntaxe selon le type de base de données
+            if os.environ.get('DATABASE_URL'):
+                # Syntaxe PostgreSQL
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS users (
+                        id SERIAL PRIMARY KEY,
+                        username VARCHAR(80) UNIQUE NOT NULL,
+                        password VARCHAR(120) NOT NULL,
+                        security_question TEXT,
+                        security_answer VARCHAR(120)
+                    )
+                """)
+            else:
+                # Syntaxe SQLite
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS users (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        username TEXT UNIQUE NOT NULL,
+                        password TEXT NOT NULL,
+                        security_question TEXT,
+                        security_answer TEXT
+                    )
+                """)
             conn.commit()
             print("✅ Table users créée/vérifiée avec succès")
             
@@ -45,16 +59,30 @@ def test_database_connection():
             hashed_password = generate_password_hash(test_password)
             hashed_answer = generate_password_hash(test_answer)
             
-            cur.execute("""
-                INSERT INTO users (username, password, security_question, security_answer) 
-                VALUES (?, ?, ?, ?)
-            """, (test_username, hashed_password, test_question, hashed_answer))
-            conn.commit()
-            print("✅ Test d'insertion réussi")
-            
-            # Nettoyer le test
-            cur.execute("DELETE FROM users WHERE username = ?", (test_username,))
-            conn.commit()
+            # Utiliser la bonne syntaxe de paramètres selon le type de base de données
+            if os.environ.get('DATABASE_URL'):
+                # PostgreSQL utilise %s
+                cur.execute("""
+                    INSERT INTO users (username, password, security_question, security_answer) 
+                    VALUES (%s, %s, %s, %s)
+                """, (test_username, hashed_password, test_question, hashed_answer))
+                conn.commit()
+                print("✅ Test d'insertion réussi")
+                
+                # Nettoyer le test
+                cur.execute("DELETE FROM users WHERE username = %s", (test_username,))
+            else:
+                # SQLite utilise ?
+                cur.execute("""
+                    INSERT INTO users (username, password, security_question, security_answer) 
+                    VALUES (?, ?, ?, ?)
+                """, (test_username, hashed_password, test_question, hashed_answer))
+                conn.commit()
+                print("✅ Test d'insertion réussi")
+                
+                # Nettoyer le test
+                cur.execute("DELETE FROM users WHERE username = ?", (test_username,))
+                conn.commit()
             print("✅ Nettoyage du test réussi")
             
         except Exception as e:
@@ -103,7 +131,12 @@ def test_registration_process():
                 conn = get_db_connection()
                 if conn:
                     cur = conn.cursor()
-                    cur.execute("DELETE FROM users WHERE username = ?", (test_data['username'],))
+                    if os.environ.get('DATABASE_URL'):
+                        # PostgreSQL
+                        cur.execute("DELETE FROM users WHERE username = %s", (test_data['username'],))
+                    else:
+                        # SQLite
+                        cur.execute("DELETE FROM users WHERE username = ?", (test_data['username'],))
                     conn.commit()
                     cur.close()
                     conn.close()

@@ -890,7 +890,7 @@ def register():
             password = request.form['password']
             question = request.form['security_question']
             answer = request.form['security_answer']
-            
+
             if not all([username, password, question, answer]):
                 flash("Veuillez remplir tous les champs.", "error")
                 return render_template('register.html', questions=get_security_questions(), t=t, get_current_language=get_current_language)
@@ -899,21 +899,34 @@ def register():
             if conn is None:
                 flash("Erreur de connexion à la base de données. Veuillez réessayer.", "error")
                 return render_template('register.html', questions=get_security_questions(), t=t, get_current_language=get_current_language)
-            
+
             cur = get_cursor(conn)
             try:
                 # Vérifier si la table users existe, sinon la créer
-                cur.execute("""
-                    CREATE TABLE IF NOT EXISTS users (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        username TEXT UNIQUE NOT NULL,
-                        password TEXT NOT NULL,
-                        security_question TEXT,
-                        security_answer TEXT
-                    )
-                """)
+                if os.environ.get('DATABASE_URL'):
+                    # Syntaxe PostgreSQL
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS users (
+                            id SERIAL PRIMARY KEY,
+                            username VARCHAR(80) UNIQUE NOT NULL,
+                            password VARCHAR(120) NOT NULL,
+                            security_question TEXT,
+                            security_answer VARCHAR(120)
+                        )
+                    """)
+                else:
+                    # Syntaxe SQLite
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS users (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            username TEXT UNIQUE NOT NULL,
+                            password TEXT NOT NULL,
+                            security_question TEXT,
+                            security_answer TEXT
+                        )
+                    """)
                 conn.commit()
-                
+
                 hashed_password = generate_password_hash(password)
                 hashed_answer = generate_password_hash(answer)
                 sql = sql_placeholder('INSERT INTO users (username, password, security_question, security_answer) VALUES (?, ?, ?, ?)')
@@ -932,7 +945,7 @@ def register():
         except Exception as e:
             print(f"Erreur générale lors de l'inscription: {e}")
             flash("Erreur lors de l'inscription. Veuillez réessayer.", "error")
-    
+
     return render_template('register.html', questions=get_security_questions(), t=t, get_current_language=get_current_language)
 
 @app.route('/login', methods=('GET', 'POST'))
@@ -2514,27 +2527,27 @@ def debug_info():
         'psycopg_available': False,
         'sqlite3_available': False
     }
-    
+
     # Vérifier les imports
     try:
         import psycopg
         info['psycopg_available'] = True
     except ImportError:
         pass
-    
+
     try:
         import sqlite3
         info['sqlite3_available'] = True
     except ImportError:
         pass
-    
+
     # Vérifier la connexion à la base de données
     try:
         conn = get_db_connection()
         if conn:
             info['database_connection'] = True
             cur = conn.cursor()
-            
+
             # Vérifier si la table users existe
             try:
                 cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users'")
@@ -2548,12 +2561,12 @@ def debug_info():
                     info['tables_exist'] = result is not None
                 except:
                     pass
-            
+
             cur.close()
             conn.close()
     except Exception as e:
         info['database_connection'] = str(e)
-    
+
     return jsonify(info)
 
 # --- Point de démarrage ---
