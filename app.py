@@ -2660,7 +2660,9 @@ def debug_info():
         'database_connection': None,
         'tables_exist': False,
         'psycopg_available': False,
-        'sqlite3_available': False
+        'sqlite3_available': False,
+        'tables_info': {},
+        'connection_error': None
     }
 
     # Vérifier les imports
@@ -2681,26 +2683,52 @@ def debug_info():
         conn = get_db_connection()
         if conn:
             info['database_connection'] = True
-            cur = conn.cursor()
+            cur = get_cursor(conn)
+            is_postgres = bool(os.environ.get('DATABASE_URL'))
 
-            # Vérifier si la table users existe
-            try:
-                cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users'")
-                result = cur.fetchone()
-                info['tables_exist'] = result is not None
-            except:
-                # Pour PostgreSQL
-                try:
-                    cur.execute("SELECT tablename FROM pg_tables WHERE tablename = 'users'")
-                    result = cur.fetchone()
-                    info['tables_exist'] = result is not None
-                except:
-                    pass
+            # Vérifier les tables
+            if is_postgres:
+                # PostgreSQL
+                tables_to_check = ['users', 'objectifs', 'taches', 'etapes', 'evenements', 'transactions']
+                for table in tables_to_check:
+                    try:
+                        cur.execute(f"SELECT COUNT(*) FROM {table}")
+                        result = cur.fetchone()
+                        count = result['count'] if result else 0
+                        info['tables_info'][table] = {
+                            'exists': True,
+                            'count': count
+                        }
+                    except Exception as e:
+                        info['tables_info'][table] = {
+                            'exists': False,
+                            'error': str(e)
+                        }
+            else:
+                # SQLite
+                tables_to_check = ['users', 'objectifs', 'taches', 'etapes', 'evenements', 'transactions']
+                for table in tables_to_check:
+                    try:
+                        cur.execute(f"SELECT COUNT(*) FROM {table}")
+                        result = cur.fetchone()
+                        count = result[0] if result else 0
+                        info['tables_info'][table] = {
+                            'exists': True,
+                            'count': count
+                        }
+                    except Exception as e:
+                        info['tables_info'][table] = {
+                            'exists': False,
+                            'error': str(e)
+                        }
 
-            cur.close()
             conn.close()
+        else:
+            info['database_connection'] = False
+            info['connection_error'] = "Impossible de créer la connexion"
     except Exception as e:
-        info['database_connection'] = str(e)
+        info['database_connection'] = False
+        info['connection_error'] = str(e)
 
     return jsonify(info)
 
@@ -2759,9 +2787,11 @@ def init_database():
                     """CREATE TABLE IF NOT EXISTS etapes (
                         id SERIAL PRIMARY KEY,
                         tache_id INTEGER NOT NULL,
-                        titre VARCHAR(200) NOT NULL,
+                        description TEXT NOT NULL,
                         terminee BOOLEAN DEFAULT FALSE,
                         ordre INTEGER DEFAULT 0,
+                        date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (tache_id) REFERENCES taches (id) ON DELETE CASCADE
                     )""",
                     """CREATE TABLE IF NOT EXISTS evenements (
@@ -2927,9 +2957,11 @@ def init_database_tables():
                     """CREATE TABLE IF NOT EXISTS etapes (
                         id SERIAL PRIMARY KEY,
                         tache_id INTEGER NOT NULL,
-                        titre VARCHAR(200) NOT NULL,
+                        description TEXT NOT NULL,
                         terminee BOOLEAN DEFAULT FALSE,
                         ordre INTEGER DEFAULT 0,
+                        date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (tache_id) REFERENCES taches (id) ON DELETE CASCADE
                     )""",
                     """CREATE TABLE IF NOT EXISTS evenements (
