@@ -1,7 +1,7 @@
 gunicorn==21.2.0
 Flask==2.3.3
 Werkzeug==2.3.7
-psycopg[binary]==3.1.13
+psycopg[binary]==3.2.9
 reportlab==4.0.4
 openpyxl==3.1.2
 Jinja2==3.1.2
