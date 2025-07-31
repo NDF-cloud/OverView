@@ -2569,26 +2569,251 @@ def debug_info():
 
     return jsonify(info)
 
+@app.route('/init-db')
+def init_database():
+    """Route pour initialiser manuellement la base de données"""
+    try:
+        conn = get_db_connection()
+        if conn:
+            cur = get_cursor(conn)
+            
+            # Créer toutes les tables nécessaires
+            if os.environ.get('DATABASE_URL'):
+                # PostgreSQL - Créer toutes les tables
+                tables_sql = [
+                    """CREATE TABLE IF NOT EXISTS users (
+                        id SERIAL PRIMARY KEY,
+                        username VARCHAR(80) UNIQUE NOT NULL,
+                        password VARCHAR(120) NOT NULL,
+                        security_question TEXT,
+                        security_answer VARCHAR(120)
+                    )""",
+                    """CREATE TABLE IF NOT EXISTS objectifs (
+                        id SERIAL PRIMARY KEY,
+                        nom VARCHAR(200) NOT NULL,
+                        montant_cible DECIMAL(10,2) NOT NULL,
+                        montant_actuel DECIMAL(10,2) NOT NULL,
+                        date_limite DATE,
+                        status VARCHAR(20) NOT NULL DEFAULT 'actif',
+                        user_id INTEGER NOT NULL,
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )""",
+                    """CREATE TABLE IF NOT EXISTS transactions (
+                        id SERIAL PRIMARY KEY,
+                        objectif_id INTEGER NOT NULL,
+                        montant DECIMAL(10,2) NOT NULL,
+                        type_transaction VARCHAR(20) NOT NULL,
+                        date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        user_id INTEGER NOT NULL,
+                        devise_saisie VARCHAR(10) DEFAULT 'XAF',
+                        FOREIGN KEY (objectif_id) REFERENCES objectifs (id),
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )""",
+                    """CREATE TABLE IF NOT EXISTS evenements (
+                        id SERIAL PRIMARY KEY,
+                        user_id INTEGER NOT NULL,
+                        titre VARCHAR(200) NOT NULL,
+                        description TEXT,
+                        date_debut DATE NOT NULL,
+                        heure_debut TIME,
+                        date_fin DATE,
+                        heure_fin TIME,
+                        lieu VARCHAR(200),
+                        couleur VARCHAR(7) DEFAULT '#fd7e14',
+                        rappel_minutes VARCHAR(10) DEFAULT '0',
+                        termine BOOLEAN DEFAULT FALSE,
+                        date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )"""
+                ]
+            else:
+                # SQLite - Créer toutes les tables
+                tables_sql = [
+                    """CREATE TABLE IF NOT EXISTS users (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        username TEXT UNIQUE NOT NULL,
+                        password TEXT NOT NULL,
+                        security_question TEXT,
+                        security_answer TEXT
+                    )""",
+                    """CREATE TABLE IF NOT EXISTS objectifs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        nom TEXT NOT NULL,
+                        montant_cible REAL NOT NULL,
+                        montant_actuel REAL NOT NULL,
+                        date_limite TEXT,
+                        status TEXT NOT NULL DEFAULT 'actif',
+                        user_id INTEGER NOT NULL,
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )""",
+                    """CREATE TABLE IF NOT EXISTS transactions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        objectif_id INTEGER NOT NULL,
+                        montant REAL NOT NULL,
+                        type_transaction TEXT NOT NULL,
+                        date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        user_id INTEGER NOT NULL,
+                        devise_saisie TEXT DEFAULT 'XAF',
+                        FOREIGN KEY (objectif_id) REFERENCES objectifs (id),
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )""",
+                    """CREATE TABLE IF NOT EXISTS evenements (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id INTEGER NOT NULL,
+                        titre TEXT NOT NULL,
+                        description TEXT,
+                        date_debut TEXT NOT NULL,
+                        heure_debut TEXT,
+                        date_fin TEXT,
+                        heure_fin TEXT,
+                        lieu TEXT,
+                        couleur TEXT DEFAULT '#fd7e14',
+                        rappel_minutes TEXT DEFAULT '0',
+                        termine BOOLEAN DEFAULT FALSE,
+                        date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )"""
+                ]
+            
+            # Exécuter toutes les créations de tables
+            for sql in tables_sql:
+                cur.execute(sql)
+            conn.commit()
+            cur.close()
+            conn.close()
+            
+            return jsonify({
+                'status': 'success',
+                'message': 'Database tables created successfully'
+            })
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': 'Database connection failed'
+            })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        })
+
 # --- Point de démarrage ---
 if __name__ == '__main__':
-    # Initialisation de la base de données si nécessaire
+    # Initialisation automatique de la base de données
+    print("🔧 Initialisation de la base de données...")
     try:
-        from init_db import main as init_db_main
-        init_db_main()
-    except ImportError:
-        # Fallback si le script d'initialisation n'est pas disponible
-        if not os.path.exists('epargne.db') and not os.environ.get('DATABASE_URL'):
-            print("Base de données SQLite non trouvée, création...")
-            conn = sqlite3.connect('epargne.db')
-            cur = conn.cursor()
-            cur.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, security_question TEXT, security_answer TEXT)")
-            cur.execute("CREATE TABLE IF NOT EXISTS objectifs (id INTEGER PRIMARY KEY, nom TEXT NOT NULL, montant_cible REAL NOT NULL, montant_actuel REAL NOT NULL, date_limite TEXT, status TEXT NOT NULL DEFAULT 'actif', user_id INTEGER NOT NULL, FOREIGN KEY (user_id) REFERENCES users (id))")
-            cur.execute("CREATE TABLE IF NOT EXISTS transactions (id INTEGER PRIMARY KEY, objectif_id INTEGER NOT NULL, montant REAL NOT NULL, type_transaction TEXT NOT NULL, date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, user_id INTEGER NOT NULL, devise_saisie TEXT DEFAULT 'XAF', FOREIGN KEY (objectif_id) REFERENCES objectifs (id), FOREIGN KEY (user_id) REFERENCES users (id))")
-            cur.execute("CREATE TABLE IF NOT EXISTS taches (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, titre TEXT NOT NULL, description TEXT, date_limite TEXT, date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP, date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP, termine BOOLEAN DEFAULT FALSE, ordre INTEGER DEFAULT 0, FOREIGN KEY (user_id) REFERENCES users (id))")
-            cur.execute("CREATE TABLE IF NOT EXISTS etapes (id INTEGER PRIMARY KEY, tache_id INTEGER NOT NULL, description TEXT NOT NULL, terminee BOOLEAN DEFAULT FALSE, ordre INTEGER DEFAULT 0, date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP, date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (tache_id) REFERENCES taches (id))")
-            cur.execute("CREATE TABLE IF NOT EXISTS evenements (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, titre TEXT NOT NULL, description TEXT, date_debut TEXT NOT NULL, heure_debut TEXT, date_fin TEXT, heure_fin TEXT, lieu TEXT, couleur TEXT DEFAULT '#fd7e14', rappel_minutes TEXT DEFAULT '0', termine BOOLEAN DEFAULT FALSE, date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users (id))")
+        conn = get_db_connection()
+        if conn:
+            cur = get_cursor(conn)
+            
+            # Créer toutes les tables nécessaires
+            if os.environ.get('DATABASE_URL'):
+                # PostgreSQL - Créer toutes les tables
+                tables_sql = [
+                    """CREATE TABLE IF NOT EXISTS users (
+                        id SERIAL PRIMARY KEY,
+                        username VARCHAR(80) UNIQUE NOT NULL,
+                        password VARCHAR(120) NOT NULL,
+                        security_question TEXT,
+                        security_answer VARCHAR(120)
+                    )""",
+                    """CREATE TABLE IF NOT EXISTS objectifs (
+                        id SERIAL PRIMARY KEY,
+                        nom VARCHAR(200) NOT NULL,
+                        montant_cible DECIMAL(10,2) NOT NULL,
+                        montant_actuel DECIMAL(10,2) NOT NULL,
+                        date_limite DATE,
+                        status VARCHAR(20) NOT NULL DEFAULT 'actif',
+                        user_id INTEGER NOT NULL,
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )""",
+                    """CREATE TABLE IF NOT EXISTS transactions (
+                        id SERIAL PRIMARY KEY,
+                        objectif_id INTEGER NOT NULL,
+                        montant DECIMAL(10,2) NOT NULL,
+                        type_transaction VARCHAR(20) NOT NULL,
+                        date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        user_id INTEGER NOT NULL,
+                        devise_saisie VARCHAR(10) DEFAULT 'XAF',
+                        FOREIGN KEY (objectif_id) REFERENCES objectifs (id),
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )""",
+                    """CREATE TABLE IF NOT EXISTS evenements (
+                        id SERIAL PRIMARY KEY,
+                        user_id INTEGER NOT NULL,
+                        titre VARCHAR(200) NOT NULL,
+                        description TEXT,
+                        date_debut DATE NOT NULL,
+                        heure_debut TIME,
+                        date_fin DATE,
+                        heure_fin TIME,
+                        lieu VARCHAR(200),
+                        couleur VARCHAR(7) DEFAULT '#fd7e14',
+                        rappel_minutes VARCHAR(10) DEFAULT '0',
+                        termine BOOLEAN DEFAULT FALSE,
+                        date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )"""
+                ]
+            else:
+                # SQLite - Créer toutes les tables
+                tables_sql = [
+                    """CREATE TABLE IF NOT EXISTS users (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        username TEXT UNIQUE NOT NULL,
+                        password TEXT NOT NULL,
+                        security_question TEXT,
+                        security_answer TEXT
+                    )""",
+                    """CREATE TABLE IF NOT EXISTS objectifs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        nom TEXT NOT NULL,
+                        montant_cible REAL NOT NULL,
+                        montant_actuel REAL NOT NULL,
+                        date_limite TEXT,
+                        status TEXT NOT NULL DEFAULT 'actif',
+                        user_id INTEGER NOT NULL,
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )""",
+                    """CREATE TABLE IF NOT EXISTS transactions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        objectif_id INTEGER NOT NULL,
+                        montant REAL NOT NULL,
+                        type_transaction TEXT NOT NULL,
+                        date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        user_id INTEGER NOT NULL,
+                        devise_saisie TEXT DEFAULT 'XAF',
+                        FOREIGN KEY (objectif_id) REFERENCES objectifs (id),
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )""",
+                    """CREATE TABLE IF NOT EXISTS evenements (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id INTEGER NOT NULL,
+                        titre TEXT NOT NULL,
+                        description TEXT,
+                        date_debut TEXT NOT NULL,
+                        heure_debut TEXT,
+                        date_fin TEXT,
+                        heure_fin TEXT,
+                        lieu TEXT,
+                        couleur TEXT DEFAULT '#fd7e14',
+                        rappel_minutes TEXT DEFAULT '0',
+                        termine BOOLEAN DEFAULT FALSE,
+                        date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )"""
+                ]
+            
+            # Exécuter toutes les créations de tables
+            for sql in tables_sql:
+                cur.execute(sql)
             conn.commit()
+            cur.close()
             conn.close()
-            print("Base de données SQLite créée.")
-
+            print("✅ Toutes les tables ont été créées avec succès")
+        else:
+            print("⚠️ Impossible de se connecter à la base de données")
+    except Exception as e:
+        print(f"⚠️ Erreur lors de l'initialisation de la base de données: {e}")
+    
     app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
