@@ -1959,11 +1959,11 @@ def dashboard():
 
     try:
         # Statistiques des objectifs
-        sql_objectifs = sql_placeholder('SELECT COUNT(*) FROM objectifs WHERE user_id = ? AND status = "actif"')
+        sql_objectifs = sql_placeholder('SELECT COUNT(*) FROM objectifs WHERE user_id = ? AND status = \'actif\'')
         cur.execute(sql_objectifs, (user_id,))
         total_objectifs = cur.fetchone()[0]
 
-        sql_epargne = sql_placeholder('SELECT SUM(montant_actuel) FROM objectifs WHERE user_id = ? AND status = "actif"')
+        sql_epargne = sql_placeholder('SELECT SUM(montant_actuel) FROM objectifs WHERE user_id = ? AND status = \'actif\'')
         cur.execute(sql_epargne, (user_id,))
         total_epargne = cur.fetchone()[0] or 0
         # Convertir le total vers la devise système
@@ -1987,7 +1987,7 @@ def dashboard():
         sql_objectifs_proches = sql_placeholder('''
             SELECT id, nom, montant_cible, montant_actuel, date_limite, status, user_id
             FROM objectifs
-            WHERE user_id = ? AND status = "actif"
+            WHERE user_id = ? AND status = \'actif\'
             ORDER BY (montant_cible - montant_actuel) ASC
             LIMIT 3
         ''')
@@ -2042,7 +2042,7 @@ def notifications():
         sql_objectifs_proches = sql_placeholder('''
             SELECT id, nom, montant_cible, montant_actuel, date_limite, status, user_id
             FROM objectifs
-            WHERE user_id = ? AND status = "actif" AND (montant_actuel / montant_cible) >= 0.9
+            WHERE user_id = ? AND status = \'actif\' AND (montant_actuel / montant_cible) >= 0.9
         ''')
         cur.execute(sql_objectifs_proches, (user_id,))
         objectifs_proches_raw = cur.fetchall()
@@ -2122,7 +2122,7 @@ def rapports():
         cur.execute(sql_total_objectifs, (user_id,))
         total_objectifs = cur.fetchone()[0]
 
-        sql_epargne_actuelle = sql_placeholder('SELECT SUM(montant_actuel) FROM objectifs WHERE user_id = ? AND status = "actif"')
+        sql_epargne_actuelle = sql_placeholder('SELECT SUM(montant_actuel) FROM objectifs WHERE user_id = ? AND status = \'actif\'')
         cur.execute(sql_epargne_actuelle, (user_id,))
         epargne_actuelle = cur.fetchone()[0] or 0
         # Convertir l'épargne vers la devise système
@@ -2205,7 +2205,7 @@ def export_pdf():
         cur.execute(sql_total_objectifs, (user_id,))
         total_objectifs = cur.fetchone()[0]
 
-        sql_epargne_actuelle = sql_placeholder('SELECT SUM(montant_actuel) FROM objectifs WHERE user_id = ? AND status = "actif"')
+        sql_epargne_actuelle = sql_placeholder('SELECT SUM(montant_actuel) FROM objectifs WHERE user_id = ? AND status = \'actif\'')
         cur.execute(sql_epargne_actuelle, (user_id,))
         epargne_actuelle = cur.fetchone()[0] or 0
         epargne_actuelle_convertie = convert_amount_to_system_currency(epargne_actuelle, 'XAF')
@@ -2430,7 +2430,7 @@ def export_excel():
         cur.execute(sql_total_objectifs, (user_id,))
         total_objectifs = cur.fetchone()[0]
 
-        sql_epargne_actuelle = sql_placeholder('SELECT SUM(montant_actuel) FROM objectifs WHERE user_id = ? AND status = "actif"')
+        sql_epargne_actuelle = sql_placeholder('SELECT SUM(montant_actuel) FROM objectifs WHERE user_id = ? AND status = \'actif\'')
         cur.execute(sql_epargne_actuelle, (user_id,))
         epargne_actuelle = cur.fetchone()[0] or 0
         epargne_actuelle_convertie = convert_amount_to_system_currency(epargne_actuelle, 'XAF')
@@ -2609,6 +2609,26 @@ def init_database():
                         FOREIGN KEY (objectif_id) REFERENCES objectifs (id),
                         FOREIGN KEY (user_id) REFERENCES users (id)
                     )""",
+                    """CREATE TABLE IF NOT EXISTS taches (
+                        id SERIAL PRIMARY KEY,
+                        user_id INTEGER NOT NULL,
+                        titre VARCHAR(200) NOT NULL,
+                        description TEXT,
+                        date_limite DATE,
+                        termine BOOLEAN DEFAULT FALSE,
+                        ordre INTEGER DEFAULT 0,
+                        date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )""",
+                    """CREATE TABLE IF NOT EXISTS etapes (
+                        id SERIAL PRIMARY KEY,
+                        tache_id INTEGER NOT NULL,
+                        titre VARCHAR(200) NOT NULL,
+                        terminee BOOLEAN DEFAULT FALSE,
+                        ordre INTEGER DEFAULT 0,
+                        FOREIGN KEY (tache_id) REFERENCES taches (id) ON DELETE CASCADE
+                    )""",
                     """CREATE TABLE IF NOT EXISTS evenements (
                         id SERIAL PRIMARY KEY,
                         user_id INTEGER NOT NULL,
@@ -2656,6 +2676,26 @@ def init_database():
                         devise_saisie TEXT DEFAULT 'XAF',
                         FOREIGN KEY (objectif_id) REFERENCES objectifs (id),
                         FOREIGN KEY (user_id) REFERENCES users (id)
+                    )""",
+                    """CREATE TABLE IF NOT EXISTS taches (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id INTEGER NOT NULL,
+                        titre TEXT NOT NULL,
+                        description TEXT,
+                        date_limite TEXT,
+                        termine BOOLEAN DEFAULT FALSE,
+                        ordre INTEGER DEFAULT 0,
+                        date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )""",
+                    """CREATE TABLE IF NOT EXISTS etapes (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        tache_id INTEGER NOT NULL,
+                        titre TEXT NOT NULL,
+                        terminee BOOLEAN DEFAULT FALSE,
+                        ordre INTEGER DEFAULT 0,
+                        FOREIGN KEY (tache_id) REFERENCES taches (id)
                     )""",
                     """CREATE TABLE IF NOT EXISTS evenements (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -2704,7 +2744,7 @@ def init_database_tables():
         conn = get_db_connection()
         if conn:
             cur = get_cursor(conn)
-            
+
             # Créer toutes les tables nécessaires
             if os.environ.get('DATABASE_URL'):
                 # PostgreSQL - Créer toutes les tables
@@ -2736,6 +2776,26 @@ def init_database_tables():
                         devise_saisie VARCHAR(10) DEFAULT 'XAF',
                         FOREIGN KEY (objectif_id) REFERENCES objectifs (id),
                         FOREIGN KEY (user_id) REFERENCES users (id)
+                    )""",
+                    """CREATE TABLE IF NOT EXISTS taches (
+                        id SERIAL PRIMARY KEY,
+                        user_id INTEGER NOT NULL,
+                        titre VARCHAR(200) NOT NULL,
+                        description TEXT,
+                        date_limite DATE,
+                        termine BOOLEAN DEFAULT FALSE,
+                        ordre INTEGER DEFAULT 0,
+                        date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )""",
+                    """CREATE TABLE IF NOT EXISTS etapes (
+                        id SERIAL PRIMARY KEY,
+                        tache_id INTEGER NOT NULL,
+                        titre VARCHAR(200) NOT NULL,
+                        terminee BOOLEAN DEFAULT FALSE,
+                        ordre INTEGER DEFAULT 0,
+                        FOREIGN KEY (tache_id) REFERENCES taches (id) ON DELETE CASCADE
                     )""",
                     """CREATE TABLE IF NOT EXISTS evenements (
                         id SERIAL PRIMARY KEY,
@@ -2785,6 +2845,26 @@ def init_database_tables():
                         FOREIGN KEY (objectif_id) REFERENCES objectifs (id),
                         FOREIGN KEY (user_id) REFERENCES users (id)
                     )""",
+                    """CREATE TABLE IF NOT EXISTS taches (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id INTEGER NOT NULL,
+                        titre TEXT NOT NULL,
+                        description TEXT,
+                        date_limite TEXT,
+                        termine BOOLEAN DEFAULT FALSE,
+                        ordre INTEGER DEFAULT 0,
+                        date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )""",
+                    """CREATE TABLE IF NOT EXISTS etapes (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        tache_id INTEGER NOT NULL,
+                        titre TEXT NOT NULL,
+                        terminee BOOLEAN DEFAULT FALSE,
+                        ordre INTEGER DEFAULT 0,
+                        FOREIGN KEY (tache_id) REFERENCES taches (id)
+                    )""",
                     """CREATE TABLE IF NOT EXISTS evenements (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         user_id INTEGER NOT NULL,
@@ -2802,7 +2882,7 @@ def init_database_tables():
                         FOREIGN KEY (user_id) REFERENCES users (id)
                     )"""
                 ]
-            
+
             # Exécuter toutes les créations de tables
             for sql in tables_sql:
                 cur.execute(sql)
