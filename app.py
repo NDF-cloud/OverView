@@ -8,8 +8,8 @@ from datetime import datetime
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
-import psycopg2
-import psycopg2.extras
+import psycopg
+import psycopg.extras
 import csv
 import io
 REPORTLAB_AVAILABLE = False
@@ -709,7 +709,7 @@ def get_db_connection():
     db_url = os.environ.get('DATABASE_URL')
     if db_url:
         try:
-            return psycopg2.connect(db_url)
+            return psycopg.connect(db_url)
         except Exception as e:
             print(f"!!! ERREUR DE CONNEXION POSTGRESQL : {e}")
             return None
@@ -751,7 +751,7 @@ class SQLiteCursorWrapper:
 
 def get_cursor(conn):
     if os.environ.get('DATABASE_URL'):
-        return conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        return conn.cursor(row_factory=psycopg.extras.DictRow)
     else:
         # Pour SQLite, on retourne un wrapper qui supporte le protocole de gestionnaire de contexte
         return SQLiteCursorWrapper(conn.cursor())
