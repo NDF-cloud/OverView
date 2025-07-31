@@ -9,7 +9,7 @@ import os
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 import psycopg
-import psycopg.extras
+import psycopg.errors
 import csv
 import io
 REPORTLAB_AVAILABLE = False
@@ -751,7 +751,7 @@ class SQLiteCursorWrapper:
 
 def get_cursor(conn):
     if os.environ.get('DATABASE_URL'):
-        return conn.cursor(row_factory=psycopg.extras.DictRow)
+        return conn.cursor(row_factory=psycopg.rows.dict_row)
     else:
         # Pour SQLite, on retourne un wrapper qui supporte le protocole de gestionnaire de contexte
         return SQLiteCursorWrapper(conn.cursor())
@@ -903,7 +903,7 @@ def register():
             conn.commit()
             flash('Inscription réussie ! Vous pouvez maintenant vous connecter.', 'success')
             return redirect(url_for('login'))
-        except (sqlite3.IntegrityError, psycopg2.IntegrityError):
+        except (sqlite3.IntegrityError, psycopg.errors.IntegrityError):
             flash(f"L'utilisateur '{username}' existe déjà.", 'error')
         finally:
             cur.close()
@@ -2480,18 +2480,24 @@ def export_excel():
 
 # --- Point de démarrage ---
 if __name__ == '__main__':
-    if not os.path.exists('epargne.db') and not os.environ.get('DATABASE_URL'):
-        print("Base de données SQLite non trouvée, création...")
-        conn = sqlite3.connect('epargne.db')
-        cur = conn.cursor()
-        cur.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, security_question TEXT, security_answer TEXT)")
-        cur.execute("CREATE TABLE IF NOT EXISTS objectifs (id INTEGER PRIMARY KEY, nom TEXT NOT NULL, montant_cible REAL NOT NULL, montant_actuel REAL NOT NULL, date_limite TEXT, status TEXT NOT NULL DEFAULT 'actif', user_id INTEGER NOT NULL, FOREIGN KEY (user_id) REFERENCES users (id))")
-        cur.execute("CREATE TABLE IF NOT EXISTS transactions (id INTEGER PRIMARY KEY, objectif_id INTEGER NOT NULL, montant REAL NOT NULL, type_transaction TEXT NOT NULL, date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, user_id INTEGER NOT NULL, FOREIGN KEY (objectif_id) REFERENCES objectifs (id), FOREIGN KEY (user_id) REFERENCES users (id))")
-        cur.execute("CREATE TABLE IF NOT EXISTS taches (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, titre TEXT NOT NULL, description TEXT, date_limite TEXT, date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP, date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP, termine BOOLEAN DEFAULT FALSE, ordre INTEGER DEFAULT 0, FOREIGN KEY (user_id) REFERENCES users (id))")
-        cur.execute("CREATE TABLE IF NOT EXISTS etapes (id INTEGER PRIMARY KEY, tache_id INTEGER NOT NULL, description TEXT NOT NULL, terminee BOOLEAN DEFAULT FALSE, ordre INTEGER DEFAULT 0, date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP, date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (tache_id) REFERENCES taches (id))")
-        cur.execute("CREATE TABLE IF NOT EXISTS evenements (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, titre TEXT NOT NULL, description TEXT, date_debut TEXT NOT NULL, heure_debut TEXT, date_fin TEXT, heure_fin TEXT, lieu TEXT, couleur TEXT DEFAULT '#fd7e14', rappel TEXT, termine BOOLEAN DEFAULT FALSE, date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users (id))")
-        conn.commit()
-        conn.close()
-        print("Base de données SQLite créée.")
+    # Initialisation de la base de données si nécessaire
+    try:
+        from init_db import main as init_db_main
+        init_db_main()
+    except ImportError:
+        # Fallback si le script d'initialisation n'est pas disponible
+        if not os.path.exists('epargne.db') and not os.environ.get('DATABASE_URL'):
+            print("Base de données SQLite non trouvée, création...")
+            conn = sqlite3.connect('epargne.db')
+            cur = conn.cursor()
+            cur.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, security_question TEXT, security_answer TEXT)")
+            cur.execute("CREATE TABLE IF NOT EXISTS objectifs (id INTEGER PRIMARY KEY, nom TEXT NOT NULL, montant_cible REAL NOT NULL, montant_actuel REAL NOT NULL, date_limite TEXT, status TEXT NOT NULL DEFAULT 'actif', user_id INTEGER NOT NULL, FOREIGN KEY (user_id) REFERENCES users (id))")
+            cur.execute("CREATE TABLE IF NOT EXISTS transactions (id INTEGER PRIMARY KEY, objectif_id INTEGER NOT NULL, montant REAL NOT NULL, type_transaction TEXT NOT NULL, date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, user_id INTEGER NOT NULL, devise_saisie TEXT DEFAULT 'XAF', FOREIGN KEY (objectif_id) REFERENCES objectifs (id), FOREIGN KEY (user_id) REFERENCES users (id))")
+            cur.execute("CREATE TABLE IF NOT EXISTS taches (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, titre TEXT NOT NULL, description TEXT, date_limite TEXT, date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP, date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP, termine BOOLEAN DEFAULT FALSE, ordre INTEGER DEFAULT 0, FOREIGN KEY (user_id) REFERENCES users (id))")
+            cur.execute("CREATE TABLE IF NOT EXISTS etapes (id INTEGER PRIMARY KEY, tache_id INTEGER NOT NULL, description TEXT NOT NULL, terminee BOOLEAN DEFAULT FALSE, ordre INTEGER DEFAULT 0, date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP, date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (tache_id) REFERENCES taches (id))")
+            cur.execute("CREATE TABLE IF NOT EXISTS evenements (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, titre TEXT NOT NULL, description TEXT, date_debut TEXT NOT NULL, heure_debut TEXT, date_fin TEXT, heure_fin TEXT, lieu TEXT, couleur TEXT DEFAULT '#fd7e14', rappel_minutes TEXT DEFAULT '0', termine BOOLEAN DEFAULT FALSE, date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users (id))")
+            conn.commit()
+            conn.close()
+            print("Base de données SQLite créée.")
 
-    app.run(debug=True)
+    app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
