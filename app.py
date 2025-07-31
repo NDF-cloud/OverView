@@ -855,6 +855,10 @@ def convert_currency(amount, from_currency, to_currency):
     if from_currency == to_currency:
         return amount
 
+    # Convertir Decimal en float si nécessaire
+    if hasattr(amount, '__float__'):
+        amount = float(amount)
+
     rates = get_exchange_rates()
     if from_currency in rates and to_currency in rates[from_currency]:
         converted_amount = amount * rates[from_currency][to_currency]
