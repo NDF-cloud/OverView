@@ -2207,7 +2207,10 @@ def rapports():
         ''')
         cur.execute(sql_evolution_mensuelle, (user_id,))
         evolution_mensuelle_raw = cur.fetchall()
-        evolution_mensuelle = [{'mois': row[0], 'total': convert_amount_to_system_currency(row[1] or 0, 'XAF')} for row in evolution_mensuelle_raw]
+        if is_postgres:
+            evolution_mensuelle = [{'mois': row['mois'], 'total': convert_amount_to_system_currency(row['total'] or 0, 'XAF')} for row in evolution_mensuelle_raw]
+        else:
+            evolution_mensuelle = [{'mois': row[0], 'total': convert_amount_to_system_currency(row[1] or 0, 'XAF')} for row in evolution_mensuelle_raw]
 
         # Performance des tâches par mois
         sql_performance_taches = sql_placeholder('''
@@ -2220,7 +2223,10 @@ def rapports():
         ''')
         cur.execute(sql_performance_taches, (user_id,))
         performance_taches_raw = cur.fetchall()
-        performance_taches = [{'mois': row[0], 'total': row[1], 'terminees': row[2]} for row in performance_taches_raw]
+        if is_postgres:
+            performance_taches = [{'mois': row['mois'], 'total': row['total_taches'], 'terminees': row['taches_terminees']} for row in performance_taches_raw]
+        else:
+            performance_taches = [{'mois': row[0], 'total': row[1], 'terminees': row[2]} for row in performance_taches_raw]
 
     finally:
         cur.close()
@@ -2365,13 +2371,22 @@ def export_pdf():
             if objectifs:
                 objectifs_data = [['Nom', 'Montant Cible', 'Montant Actuel', 'Date Limite', 'Statut']]
                 for obj in objectifs:
-                    objectifs_data.append([
-                        obj[0],
-                        f"{format_currency(convert_amount_to_system_currency(obj[1], 'XAF'))}",
-                        f"{format_currency(convert_amount_to_system_currency(obj[2], 'XAF'))}",
-                        obj[3] or 'Non définie',
-                        obj[4]
-                    ])
+                    if is_postgres:
+                        objectifs_data.append([
+                            obj['nom'],
+                            f"{format_currency(convert_amount_to_system_currency(obj['montant_cible'], 'XAF'))}",
+                            f"{format_currency(convert_amount_to_system_currency(obj['montant_actuel'], 'XAF'))}",
+                            obj['date_limite'] or 'Non définie',
+                            obj['status']
+                        ])
+                    else:
+                        objectifs_data.append([
+                            obj[0],
+                            f"{format_currency(convert_amount_to_system_currency(obj[1], 'XAF'))}",
+                            f"{format_currency(convert_amount_to_system_currency(obj[2], 'XAF'))}",
+                            obj[3] or 'Non définie',
+                            obj[4]
+                        ])
 
                 objectifs_table = Table(objectifs_data)
                 objectifs_table.setStyle(TableStyle([
@@ -2398,12 +2413,20 @@ def export_pdf():
             if taches:
                 taches_data = [['Titre', 'Description', 'Date Limite', 'Statut']]
                 for tache in taches:
-                    taches_data.append([
-                        tache[0],
-                        tache[1] or 'Aucune description',
-                        tache[2] or 'Non définie',
-                        'Terminée' if tache[3] else 'En cours'
-                    ])
+                    if is_postgres:
+                        taches_data.append([
+                            tache['titre'],
+                            tache['description'] or 'Aucune description',
+                            tache['date_limite'] or 'Non définie',
+                            'Terminée' if tache['termine'] else 'En cours'
+                        ])
+                    else:
+                        taches_data.append([
+                            tache[0],
+                            tache[1] or 'Aucune description',
+                            tache[2] or 'Non définie',
+                            'Terminée' if tache[3] else 'En cours'
+                        ])
 
                 taches_table = Table(taches_data)
                 taches_table.setStyle(TableStyle([
@@ -2457,7 +2480,10 @@ def export_pdf():
                 buffer.write(f"{'Nom':<20} {'Montant Cible':<15} {'Montant Actuel':<15} {'Date Limite':<12} {'Statut':<10}\n")
                 buffer.write("-" * 80 + "\n")
                 for obj in objectifs:
-                    buffer.write(f"{obj[0]:<20} {format_currency(convert_amount_to_system_currency(obj[1], 'XAF')):<15} {format_currency(convert_amount_to_system_currency(obj[2], 'XAF')):<15} {(obj[3] or 'Non définie'):<12} {obj[4]:<10}\n")
+                    if is_postgres:
+                        buffer.write(f"{obj['nom']:<20} {format_currency(convert_amount_to_system_currency(obj['montant_cible'], 'XAF')):<15} {format_currency(convert_amount_to_system_currency(obj['montant_actuel'], 'XAF')):<15} {(obj['date_limite'] or 'Non définie'):<12} {obj['status']:<10}\n")
+                    else:
+                        buffer.write(f"{obj[0]:<20} {format_currency(convert_amount_to_system_currency(obj[1], 'XAF')):<15} {format_currency(convert_amount_to_system_currency(obj[2], 'XAF')):<15} {(obj[3] or 'Non définie'):<12} {obj[4]:<10}\n")
             else:
                 buffer.write("Aucun objectif trouvé.\n")
             buffer.write("\n")
@@ -2469,10 +2495,16 @@ def export_pdf():
                 buffer.write(f"{'Titre':<25} {'Description':<30} {'Date Limite':<12} {'Statut':<10}\n")
                 buffer.write("-" * 80 + "\n")
                 for tache in taches:
-                    description = tache[1] or 'Aucune description'
-                    if len(description) > 28:
-                        description = description[:25] + "..."
-                    buffer.write(f"{tache[0]:<25} {description:<30} {(tache[2] or 'Non définie'):<12} {'Terminée' if tache[3] else 'En cours':<10}\n")
+                    if is_postgres:
+                        description = tache['description'] or 'Aucune description'
+                        if len(description) > 28:
+                            description = description[:25] + "..."
+                        buffer.write(f"{tache['titre']:<25} {description:<30} {(tache['date_limite'] or 'Non définie'):<12} {'Terminée' if tache['termine'] else 'En cours':<10}\n")
+                    else:
+                        description = tache[1] or 'Aucune description'
+                        if len(description) > 28:
+                            description = description[:25] + "..."
+                        buffer.write(f"{tache[0]:<25} {description:<30} {(tache[2] or 'Non définie'):<12} {'Terminée' if tache[3] else 'En cours':<10}\n")
             else:
                 buffer.write("Aucune tâche trouvée.\n")
 
@@ -2573,25 +2605,42 @@ def export_excel():
     writer.writerow(['Objectifs d\'Épargne'])
     writer.writerow(['Nom', 'Montant Cible', 'Montant Actuel', 'Date Limite', 'Statut'])
     for obj in objectifs:
-        writer.writerow([
-            obj[0],
-            format_currency(convert_amount_to_system_currency(obj[1], 'XAF')),
-            format_currency(convert_amount_to_system_currency(obj[2], 'XAF')),
-            obj[3] or 'Non définie',
-            obj[4]
-        ])
+        if is_postgres:
+            writer.writerow([
+                obj['nom'],
+                format_currency(convert_amount_to_system_currency(obj['montant_cible'], 'XAF')),
+                format_currency(convert_amount_to_system_currency(obj['montant_actuel'], 'XAF')),
+                obj['date_limite'] or 'Non définie',
+                obj['status']
+            ])
+        else:
+            writer.writerow([
+                obj[0],
+                format_currency(convert_amount_to_system_currency(obj[1], 'XAF')),
+                format_currency(convert_amount_to_system_currency(obj[2], 'XAF')),
+                obj[3] or 'Non définie',
+                obj[4]
+            ])
     writer.writerow([])
 
     # Tâches
     writer.writerow(['Tâches'])
     writer.writerow(['Titre', 'Description', 'Date Limite', 'Statut'])
     for tache in taches:
-        writer.writerow([
-            tache[0],
-            tache[1] or 'Aucune description',
-            tache[2] or 'Non définie',
-            'Terminée' if tache[3] else 'En cours'
-        ])
+        if is_postgres:
+            writer.writerow([
+                tache['titre'],
+                tache['description'] or 'Aucune description',
+                tache['date_limite'] or 'Non définie',
+                'Terminée' if tache['termine'] else 'En cours'
+            ])
+        else:
+            writer.writerow([
+                tache[0],
+                tache[1] or 'Aucune description',
+                tache[2] or 'Non définie',
+                'Terminée' if tache[3] else 'En cours'
+            ])
 
     buffer.seek(0)
 
