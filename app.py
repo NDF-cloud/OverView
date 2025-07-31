@@ -1277,6 +1277,11 @@ def add_transaction(objectif_id):
             return redirect(url_for('index'))
 
         montant_actuel = objectif['montant_actuel']
+
+        # Convertir Decimal en float si nécessaire
+        if hasattr(montant_actuel, '__float__'):
+            montant_actuel = float(montant_actuel)
+
         nouveau_montant = montant_actuel + montant_converti if type_transaction == 'entree' else montant_actuel - montant_converti
 
         sql_update = sql_placeholder('UPDATE objectifs SET montant_actuel = ? WHERE id = ?')
