@@ -2576,7 +2576,7 @@ def init_database():
         conn = get_db_connection()
         if conn:
             cur = get_cursor(conn)
-            
+
             # Créer toutes les tables nécessaires
             if os.environ.get('DATABASE_URL'):
                 # PostgreSQL - Créer toutes les tables
@@ -2674,14 +2674,14 @@ def init_database():
                         FOREIGN KEY (user_id) REFERENCES users (id)
                     )"""
                 ]
-            
+
             # Exécuter toutes les créations de tables
             for sql in tables_sql:
                 cur.execute(sql)
             conn.commit()
             cur.close()
             conn.close()
-            
+
             return jsonify({
                 'status': 'success',
                 'message': 'Database tables created successfully'
@@ -2697,9 +2697,8 @@ def init_database():
             'message': str(e)
         })
 
-# --- Point de démarrage ---
-if __name__ == '__main__':
-    # Initialisation automatique de la base de données
+def init_database_tables():
+    """Initialise les tables de la base de données"""
     print("🔧 Initialisation de la base de données...")
     try:
         conn = get_db_connection()
@@ -2815,5 +2814,10 @@ if __name__ == '__main__':
             print("⚠️ Impossible de se connecter à la base de données")
     except Exception as e:
         print(f"⚠️ Erreur lors de l'initialisation de la base de données: {e}")
-    
+
+# Initialiser les tables au démarrage de l'application
+init_database_tables()
+
+# --- Point de démarrage ---
+if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
