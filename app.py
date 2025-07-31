@@ -1692,7 +1692,10 @@ def sauvegarder_tache(tache_id):
             # Création d'une nouvelle tâche
             sql_insert = sql_placeholder('INSERT INTO taches (user_id, titre, description, date_limite) VALUES (?, ?, ?, ?) RETURNING id')
             cur.execute(sql_insert, (user_id, titre, description, date_limite))
-            tache_id = cur.fetchone()[0]
+            result = cur.fetchone()
+            tache_id = result[0] if result else None
+            if not tache_id:
+                raise Exception("Impossible de créer la tâche")
 
         # Ajouter les nouvelles étapes
         if etapes_text.strip():
@@ -1961,27 +1964,32 @@ def dashboard():
         # Statistiques des objectifs
         sql_objectifs = sql_placeholder('SELECT COUNT(*) FROM objectifs WHERE user_id = ? AND status = \'actif\'')
         cur.execute(sql_objectifs, (user_id,))
-        total_objectifs = cur.fetchone()[0]
+        result = cur.fetchone()
+        total_objectifs = result[0] if result else 0
 
         sql_epargne = sql_placeholder('SELECT SUM(montant_actuel) FROM objectifs WHERE user_id = ? AND status = \'actif\'')
         cur.execute(sql_epargne, (user_id,))
-        total_epargne = cur.fetchone()[0] or 0
+        result = cur.fetchone()
+        total_epargne = result[0] if result and result[0] else 0
         # Convertir le total vers la devise système
         total_epargne_converti = convert_amount_to_system_currency(total_epargne, 'XAF')
 
         # Statistiques des tâches
         sql_taches = sql_placeholder('SELECT COUNT(*) FROM taches WHERE user_id = ?')
         cur.execute(sql_taches, (user_id,))
-        total_taches = cur.fetchone()[0]
+        result = cur.fetchone()
+        total_taches = result[0] if result else 0
 
         sql_taches_terminees = sql_placeholder('SELECT COUNT(*) FROM taches WHERE user_id = ? AND termine = TRUE')
         cur.execute(sql_taches_terminees, (user_id,))
-        taches_terminees = cur.fetchone()[0]
+        result = cur.fetchone()
+        taches_terminees = result[0] if result else 0
 
         # Statistiques des événements
         sql_evenements = sql_placeholder('SELECT COUNT(*) FROM evenements WHERE user_id = ? AND termine = FALSE')
         cur.execute(sql_evenements, (user_id,))
-        evenements_a_venir = cur.fetchone()[0]
+        result = cur.fetchone()
+        evenements_a_venir = result[0] if result else 0
 
         # Objectifs proches de la fin
         sql_objectifs_proches = sql_placeholder('''
@@ -2054,23 +2062,39 @@ def notifications():
             obj['montant_actuel'] = convert_amount_to_system_currency(obj['montant_actuel'], 'XAF')
 
         # Tâches en retard (créées il y a plus de 7 jours)
-        sql_taches_retard = sql_placeholder('''
-            SELECT id, user_id, titre, description, date_creation, date_modification, termine, ordre
-            FROM taches
-            WHERE user_id = ? AND termine = FALSE AND date_creation < date("now", "-7 days")
-        ''')
+        if is_postgres:
+            sql_taches_retard = '''
+                SELECT id, user_id, titre, description, date_creation, date_modification, termine, ordre
+                FROM taches
+                WHERE user_id = %s AND termine = FALSE AND date_creation < CURRENT_DATE - INTERVAL '7 days'
+            '''
+        else:
+            sql_taches_retard = '''
+                SELECT id, user_id, titre, description, date_creation, date_modification, termine, ordre
+                FROM taches
+                WHERE user_id = ? AND termine = FALSE AND date_creation < date("now", "-7 days")
+            '''
         cur.execute(sql_taches_retard, (user_id,))
         taches_retard_raw = cur.fetchall()
         taches_retard = [convert_tache_to_dict(tache, is_postgres) for tache in taches_retard_raw]
 
         # Événements à venir (dans les 7 prochains jours)
-        sql_evenements_proches = sql_placeholder('''
-            SELECT id, user_id, titre, description, date_debut, date_fin, heure_debut, heure_fin, lieu, couleur, rappel_minutes, termine, date_creation
-            FROM evenements
-            WHERE user_id = ? AND termine = FALSE
-            AND date_debut BETWEEN date("now") AND date("now", "+7 days")
-            ORDER BY date_debut ASC, heure_debut ASC
-        ''')
+        if is_postgres:
+            sql_evenements_proches = '''
+                SELECT id, user_id, titre, description, date_debut, date_fin, heure_debut, heure_fin, lieu, couleur, rappel_minutes, termine, date_creation
+                FROM evenements
+                WHERE user_id = %s AND termine = FALSE
+                AND date_debut BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days'
+                ORDER BY date_debut ASC, heure_debut ASC
+            '''
+        else:
+            sql_evenements_proches = '''
+                SELECT id, user_id, titre, description, date_debut, date_fin, heure_debut, heure_fin, lieu, couleur, rappel_minutes, termine, date_creation
+                FROM evenements
+                WHERE user_id = ? AND termine = FALSE
+                AND date_debut BETWEEN date("now") AND date("now", "+7 days")
+                ORDER BY date_debut ASC, heure_debut ASC
+            '''
         cur.execute(sql_evenements_proches, (user_id,))
         evenements_proches_raw = cur.fetchall()
         evenements_proches = [convert_evenement_to_dict(evenement, is_postgres) for evenement in evenements_proches_raw]
@@ -2120,17 +2144,19 @@ def rapports():
         # Statistiques générales
         sql_total_objectifs = sql_placeholder('SELECT COUNT(*) FROM objectifs WHERE user_id = ?')
         cur.execute(sql_total_objectifs, (user_id,))
-        total_objectifs = cur.fetchone()[0]
+        result = cur.fetchone()
+        total_objectifs = result[0] if result else 0
 
         sql_epargne_actuelle = sql_placeholder('SELECT SUM(montant_actuel) FROM objectifs WHERE user_id = ? AND status = \'actif\'')
         cur.execute(sql_epargne_actuelle, (user_id,))
-        epargne_actuelle = cur.fetchone()[0] or 0
-        # Convertir l'épargne vers la devise système
+        result = cur.fetchone()
+        epargne_actuelle = result[0] if result and result[0] else 0
         epargne_actuelle_convertie = convert_amount_to_system_currency(epargne_actuelle, 'XAF')
 
         sql_total_taches = sql_placeholder('SELECT COUNT(*) FROM taches WHERE user_id = ?')
         cur.execute(sql_total_taches, (user_id,))
-        total_taches = cur.fetchone()[0]
+        result = cur.fetchone()
+        total_taches = result[0] if result else 0
 
         sql_taux_reussite = sql_placeholder('''
             SELECT
@@ -2141,7 +2167,8 @@ def rapports():
             FROM taches WHERE user_id = ?
         ''')
         cur.execute(sql_taux_reussite, (user_id,))
-        taux_reussite = cur.fetchone()[0] or 0
+        result = cur.fetchone()
+        taux_reussite = result[0] if result and result[0] else 0
 
         # Évolution mensuelle des épargnes
         sql_evolution_mensuelle = sql_placeholder('''
@@ -2153,7 +2180,7 @@ def rapports():
         ''')
         cur.execute(sql_evolution_mensuelle, (user_id,))
         evolution_mensuelle_raw = cur.fetchall()
-        evolution_mensuelle = [{'mois': row[0], 'total': convert_amount_to_system_currency(row[1], 'XAF')} for row in evolution_mensuelle_raw]
+        evolution_mensuelle = [{'mois': row[0], 'total': convert_amount_to_system_currency(row[1] or 0, 'XAF')} for row in evolution_mensuelle_raw]
 
         # Performance des tâches par mois
         sql_performance_taches = sql_placeholder('''
@@ -2428,16 +2455,19 @@ def export_excel():
         # Statistiques générales
         sql_total_objectifs = sql_placeholder('SELECT COUNT(*) FROM objectifs WHERE user_id = ?')
         cur.execute(sql_total_objectifs, (user_id,))
-        total_objectifs = cur.fetchone()[0]
+        result = cur.fetchone()
+        total_objectifs = result[0] if result else 0
 
         sql_epargne_actuelle = sql_placeholder('SELECT SUM(montant_actuel) FROM objectifs WHERE user_id = ? AND status = \'actif\'')
         cur.execute(sql_epargne_actuelle, (user_id,))
-        epargne_actuelle = cur.fetchone()[0] or 0
+        result = cur.fetchone()
+        epargne_actuelle = result[0] if result and result[0] else 0
         epargne_actuelle_convertie = convert_amount_to_system_currency(epargne_actuelle, 'XAF')
 
         sql_total_taches = sql_placeholder('SELECT COUNT(*) FROM taches WHERE user_id = ?')
         cur.execute(sql_total_taches, (user_id,))
-        total_taches = cur.fetchone()[0]
+        result = cur.fetchone()
+        total_taches = result[0] if result else 0
 
         sql_taux_reussite = sql_placeholder('''
             SELECT
@@ -2448,7 +2478,8 @@ def export_excel():
             FROM taches WHERE user_id = ?
         ''')
         cur.execute(sql_taux_reussite, (user_id,))
-        taux_reussite = cur.fetchone()[0] or 0
+        result = cur.fetchone()
+        taux_reussite = result[0] if result and result[0] else 0
 
         # Récupérer les objectifs
         sql_objectifs = sql_placeholder('SELECT nom, montant_cible, montant_actuel, date_limite, status FROM objectifs WHERE user_id = ? ORDER BY date_limite')
