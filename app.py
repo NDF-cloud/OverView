@@ -3053,18 +3053,18 @@ def init_database_tables():
             # Exécuter toutes les créations de tables
             for sql in tables_sql:
                 cur.execute(sql)
-            
+
             # Ajouter les colonnes manquantes si elles n'existent pas
             try:
                 cur.execute("ALTER TABLE objectifs ADD COLUMN archived BOOLEAN DEFAULT FALSE")
             except:
                 pass  # La colonne existe déjà
-                
+
             try:
                 cur.execute("ALTER TABLE taches ADD COLUMN archived BOOLEAN DEFAULT FALSE")
             except:
                 pass  # La colonne existe déjà
-            
+
             # Créer la table notifications si elle n'existe pas
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS notifications (
@@ -3078,7 +3078,7 @@ def init_database_tables():
                     FOREIGN KEY (user_id) REFERENCES users (id)
                 )
             """)
-            
+
             conn.commit()
             cur.close()
             conn.close()
@@ -3114,7 +3114,7 @@ def tab_content(tab_name):
                        COUNT(t.id) as nombre_transactions
                 FROM objectifs o
                 LEFT JOIN transactions t ON o.id = t.objectif_id
-                WHERE o.user_id = %s AND o.archived = 0
+                WHERE o.user_id = $1 AND o.archived = false
                 GROUP BY o.id
                 ORDER BY o.date_limite ASC
             """, (session['user_id'],))
@@ -3127,7 +3127,8 @@ def tab_content(tab_name):
 
         return render_template('index.html',
                              objectifs=objectifs,
-                             total_general=total_general)
+                             total_general=total_general,
+                             t=t, get_current_language=get_current_language)
 
     elif tab_name == 'taches':
         # Contenu de l'onglet Tâches
@@ -3139,7 +3140,7 @@ def tab_content(tab_name):
                        SUM(CASE WHEN e.terminee THEN 1 ELSE 0 END) as etapes_terminees
                 FROM taches t
                 LEFT JOIN etapes e ON t.id = e.tache_id
-                WHERE t.user_id = %s AND t.archived = 0
+                WHERE t.user_id = $1 AND t.archived = false
                 GROUP BY t.id
                 ORDER BY t.date_limite ASC
             """, (session['user_id'],))
@@ -3147,7 +3148,7 @@ def tab_content(tab_name):
 
         conn.close()
 
-        return render_template('taches.html', taches=taches)
+        return render_template('taches.html', taches=taches, t=t, get_current_language=get_current_language)
 
     elif tab_name == 'agenda':
         # Contenu de l'onglet Agenda
@@ -3155,14 +3156,14 @@ def tab_content(tab_name):
         with SQLiteCursorWrapper(conn.cursor()) as cursor:
             cursor.execute("""
                 SELECT * FROM evenements
-                WHERE user_id = %s AND date_debut >= date('now')
+                WHERE user_id = $1 AND date_debut >= CURRENT_DATE
                 ORDER BY date_debut ASC
             """, (session['user_id'],))
             evenements = [convert_evenement_to_dict(row) for row in cursor.fetchall()]
 
         conn.close()
 
-        return render_template('calendrier.html', evenements=evenements)
+        return render_template('calendrier.html', evenements=evenements, t=t, get_current_language=get_current_language)
 
     elif tab_name == 'dashboard':
         # Contenu de l'onglet Dashboard
@@ -3171,20 +3172,20 @@ def tab_content(tab_name):
             # Statistiques des objectifs
             cursor.execute("""
                 SELECT COUNT(*) as total_objectifs,
-                       SUM(CASE WHEN date_limite < date('now') THEN 1 ELSE 0 END) as objectifs_en_retard,
+                       SUM(CASE WHEN date_limite < CURRENT_DATE THEN 1 ELSE 0 END) as objectifs_en_retard,
                        SUM(CASE WHEN montant_actuel >= montant_cible THEN 1 ELSE 0 END) as objectifs_atteints
                 FROM objectifs
-                WHERE user_id = %s AND archived = 0
+                WHERE user_id = $1 AND archived = false
             """, (session['user_id'],))
             stats_objectifs = convert_to_dict(cursor.fetchone())
 
             # Statistiques des tâches
             cursor.execute("""
                 SELECT COUNT(*) as total_taches,
-                       SUM(CASE WHEN date_limite < date('now') THEN 1 ELSE 0 END) as taches_en_retard,
+                       SUM(CASE WHEN date_limite < CURRENT_DATE THEN 1 ELSE 0 END) as taches_en_retard,
                        SUM(CASE WHEN terminee THEN 1 ELSE 0 END) as taches_terminees
                 FROM taches
-                WHERE user_id = %s AND archived = 0
+                WHERE user_id = $1 AND archived = false
             """, (session['user_id'],))
             stats_taches = convert_to_dict(cursor.fetchone())
 
@@ -3192,7 +3193,8 @@ def tab_content(tab_name):
 
         return render_template('dashboard.html',
                              stats_objectifs=stats_objectifs,
-                             stats_taches=stats_taches)
+                             stats_taches=stats_taches,
+                             t=t, get_current_language=get_current_language)
 
     elif tab_name == 'notifications':
         # Contenu de l'onglet Notifications
@@ -3200,7 +3202,7 @@ def tab_content(tab_name):
         with SQLiteCursorWrapper(conn.cursor()) as cursor:
             cursor.execute("""
                 SELECT * FROM notifications
-                WHERE user_id = %s
+                WHERE user_id = $1
                 ORDER BY date_creation DESC
                 LIMIT 50
             """, (session['user_id'],))
@@ -3208,7 +3210,7 @@ def tab_content(tab_name):
 
         conn.close()
 
-        return render_template('notifications.html', notifications=notifications)
+        return render_template('notifications.html', notifications=notifications, t=t, get_current_language=get_current_language)
 
     elif tab_name == 'rapports':
         # Contenu de l'onglet Rapports
@@ -3225,13 +3227,13 @@ def tab_content(tab_name):
                 LEFT JOIN taches t ON t.user_id = o.user_id
                 LEFT JOIN evenements e ON e.user_id = o.user_id
                 LEFT JOIN transactions tr ON tr.objectif_id = o.id
-                WHERE o.user_id = %s
+                WHERE o.user_id = $1
             """, (session['user_id'],))
             stats_generales = convert_to_dict(cursor.fetchone())
 
         conn.close()
 
-        return render_template('rapports.html', stats_generales=stats_generales)
+        return render_template('rapports.html', stats_generales=stats_generales, t=t, get_current_language=get_current_language)
 
     else:
         return "Onglet non trouvé", 404
