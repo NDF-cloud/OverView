@@ -762,10 +762,23 @@ def convert_to_dict(row, is_postgres=False):
         return dict(row)
     else:
         # Pour SQLite, structure réelle: id, nom, montant_cible, montant_actuel, date_limite, status, user_id
-        return {
-            'id': row[0], 'nom': row[1], 'montant_cible': row[2], 'montant_actuel': row[3],
-            'date_limite': row[4], 'status': row[5], 'user_id': row[6], 'date_creation': None
-        }
+        try:
+            return {
+                'id': row[0], 'nom': row[1], 'montant_cible': row[2], 'montant_actuel': row[3],
+                'date_limite': row[4], 'status': row[5], 'user_id': row[6], 'date_creation': None
+            }
+        except (IndexError, TypeError):
+            # Fallback si la structure ne correspond pas
+            return {
+                'id': row[0] if len(row) > 0 else None,
+                'nom': row[1] if len(row) > 1 else '',
+                'montant_cible': row[2] if len(row) > 2 else 0,
+                'montant_actuel': row[3] if len(row) > 3 else 0,
+                'date_limite': row[4] if len(row) > 4 else None,
+                'status': row[5] if len(row) > 5 else 'actif',
+                'user_id': row[6] if len(row) > 6 else None,
+                'date_creation': None
+            }
 
 def convert_tache_to_dict(row, is_postgres=False):
     if is_postgres:
@@ -3040,6 +3053,32 @@ def init_database_tables():
             # Exécuter toutes les créations de tables
             for sql in tables_sql:
                 cur.execute(sql)
+            
+            # Ajouter les colonnes manquantes si elles n'existent pas
+            try:
+                cur.execute("ALTER TABLE objectifs ADD COLUMN archived BOOLEAN DEFAULT FALSE")
+            except:
+                pass  # La colonne existe déjà
+                
+            try:
+                cur.execute("ALTER TABLE taches ADD COLUMN archived BOOLEAN DEFAULT FALSE")
+            except:
+                pass  # La colonne existe déjà
+            
+            # Créer la table notifications si elle n'existe pas
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS notifications (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL,
+                    titre VARCHAR(200) NOT NULL,
+                    message TEXT,
+                    type_notification VARCHAR(50) DEFAULT 'info',
+                    lu BOOLEAN DEFAULT FALSE,
+                    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users (id)
+                )
+            """)
+            
             conn.commit()
             cur.close()
             conn.close()
@@ -3075,7 +3114,7 @@ def tab_content(tab_name):
                        COUNT(t.id) as nombre_transactions
                 FROM objectifs o
                 LEFT JOIN transactions t ON o.id = t.objectif_id
-                WHERE o.user_id = %s AND o.archivé = 0
+                WHERE o.user_id = %s AND o.archived = 0
                 GROUP BY o.id
                 ORDER BY o.date_limite ASC
             """, (session['user_id'],))
@@ -3100,7 +3139,7 @@ def tab_content(tab_name):
                        SUM(CASE WHEN e.terminee THEN 1 ELSE 0 END) as etapes_terminees
                 FROM taches t
                 LEFT JOIN etapes e ON t.id = e.tache_id
-                WHERE t.user_id = %s AND t.archivé = 0
+                WHERE t.user_id = %s AND t.archived = 0
                 GROUP BY t.id
                 ORDER BY t.date_limite ASC
             """, (session['user_id'],))
@@ -3135,7 +3174,7 @@ def tab_content(tab_name):
                        SUM(CASE WHEN date_limite < date('now') THEN 1 ELSE 0 END) as objectifs_en_retard,
                        SUM(CASE WHEN montant_actuel >= montant_cible THEN 1 ELSE 0 END) as objectifs_atteints
                 FROM objectifs
-                WHERE user_id = %s AND archivé = 0
+                WHERE user_id = %s AND archived = 0
             """, (session['user_id'],))
             stats_objectifs = convert_to_dict(cursor.fetchone())
 
@@ -3145,7 +3184,7 @@ def tab_content(tab_name):
                        SUM(CASE WHEN date_limite < date('now') THEN 1 ELSE 0 END) as taches_en_retard,
                        SUM(CASE WHEN terminee THEN 1 ELSE 0 END) as taches_terminees
                 FROM taches
-                WHERE user_id = %s AND archivé = 0
+                WHERE user_id = %s AND archived = 0
             """, (session['user_id'],))
             stats_taches = convert_to_dict(cursor.fetchone())
 
