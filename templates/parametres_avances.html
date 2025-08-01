@@ -616,6 +616,82 @@
     </div>
 
     <script>
+        let isMobile = window.innerWidth <= 768;
+        let scrollTimeout;
+        let isScrolling = false;
+
+        // Fonction pour détecter si on est sur mobile
+        function checkMobile() {
+            isMobile = window.innerWidth <= 768;
+        }
+
+        // Fonction pour détecter l'onglet au centre
+        function detectCenterTab() {
+            if (!isMobile) return;
+
+            const navTabs = document.querySelector('.nav-tabs');
+            const tabs = document.querySelectorAll('.nav-tab');
+            const containerCenter = navTabs.offsetLeft + navTabs.offsetWidth / 2;
+
+            let centerTab = null;
+            let minDistance = Infinity;
+
+            tabs.forEach(tab => {
+                const tabCenter = tab.offsetLeft + tab.offsetWidth / 2;
+                const distance = Math.abs(tabCenter - containerCenter);
+
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    centerTab = tab;
+                }
+            });
+
+            return centerTab;
+        }
+
+        // Fonction pour naviguer vers l'onglet au centre
+        function navigateToCenterTab() {
+            if (!isMobile) return;
+
+            const centerTab = detectCenterTab();
+            if (centerTab && !centerTab.classList.contains('active')) {
+                // Ajouter un délai pour éviter les clics accidentels
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(() => {
+                    window.location.href = centerTab.href;
+                }, 500);
+            }
+        }
+
+        // Écouter le défilement des onglets
+        function setupTabScrollDetection() {
+            if (!isMobile) return;
+
+            const navTabs = document.querySelector('.nav-tabs');
+
+            navTabs.addEventListener('scroll', () => {
+                isScrolling = true;
+                clearTimeout(scrollTimeout);
+
+                scrollTimeout = setTimeout(() => {
+                    isScrolling = false;
+                    navigateToCenterTab();
+                }, 150);
+            });
+        }
+
+        // Initialiser la détection au chargement
+        window.addEventListener('load', () => {
+            checkMobile();
+            setupTabScrollDetection();
+        });
+
+        // Réinitialiser lors du redimensionnement
+        window.addEventListener('resize', () => {
+            checkMobile();
+            setupTabScrollDetection();
+        });
+
         // Activer le mode sombre si configuré
         if (localStorage.getItem('theme') === 'dark') {
             document.body.classList.add('dark-mode');
