@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="{{ get_current_language() }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}OverView{% endblock %}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Mode sombre */
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .dark-mode .header {
+            background-color: rgba(30, 30, 30, 0.95);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .dark-mode .header h1 {
+            color: #76c7c0;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .dark-mode .header p {
+            color: #ccc;
+        }
+
+        /* Barre d'onglets unique */
+        .nav-tabs-container {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .dark-mode .nav-tabs-container {
+            background-color: rgba(30, 30, 30, 0.95);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .nav-tabs {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            padding: 15px;
+            gap: 10px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .nav-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .nav-tab {
+            flex: 0 0 auto;
+            scroll-snap-align: center;
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            padding: 12px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            text-align: center;
+            font-weight: 500;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            white-space: nowrap;
+            min-width: 100px;
+        }
+
+        .nav-tab:hover {
+            background: rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .nav-tab.active {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .dark-mode .nav-tab {
+            background: rgba(118, 199, 192, 0.1);
+            color: #76c7c0;
+            border-color: rgba(118, 199, 192, 0.2);
+        }
+
+        .dark-mode .nav-tab:hover {
+            background: rgba(118, 199, 192, 0.2);
+        }
+
+        .dark-mode .nav-tab.active {
+            background: #76c7c0;
+            color: #1a1a2e;
+            box-shadow: 0 4px 15px rgba(118, 199, 192, 0.4);
+        }
+
+        /* Contenu des onglets */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Styles pour mobile */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 20px;
+                margin-bottom: 15px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .nav-tabs-container {
+                margin-bottom: 15px;
+            }
+
+            .nav-tabs {
+                padding: 10px;
+                gap: 5px;
+            }
+
+            .nav-tab {
+                padding: 10px 15px;
+                font-size: 0.9em;
+                min-width: 80px;
+                transform: scale(0.9);
+                opacity: 0.8;
+            }
+
+            .nav-tab:hover {
+                transform: scale(0.95);
+                opacity: 0.9;
+            }
+
+            .nav-tab.active {
+                transform: scale(1.1);
+                opacity: 1;
+                z-index: 2;
+                position: relative;
+            }
+
+            /* Effet de perspective pour les onglets adjacents */
+            .nav-tab:not(.active) {
+                transform: scale(0.7) translateX(0);
+                opacity: 0.5;
+            }
+
+            .nav-tab:not(.active):hover {
+                transform: scale(0.75);
+                opacity: 0.7;
+            }
+        }
+
+        /* Amélioration pour très petits écrans */
+        @media (max-width: 480px) {
+            .nav-tab {
+                padding: 8px 12px;
+                font-size: 0.8em;
+                min-width: 70px;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{% block header_title %}OverView{% endblock %}</h1>
+            <p>{% block header_subtitle %}{% endblock %}</p>
+        </div>
+
+        <!-- Barre d'onglets unique -->
+        <div class="nav-tabs-container">
+            <div class="nav-tabs" id="navTabs">
+                <a href="#epargne" class="nav-tab" data-tab="epargne">Épargne</a>
+                <a href="#taches" class="nav-tab" data-tab="taches">Tâches</a>
+                <a href="#agenda" class="nav-tab" data-tab="agenda">Agenda</a>
+                <a href="#dashboard" class="nav-tab" data-tab="dashboard">Dashboard</a>
+                <a href="#notifications" class="nav-tab" data-tab="notifications">Notifications</a>
+                <a href="#rapports" class="nav-tab" data-tab="rapports">Rapports</a>
+            </div>
+        </div>
+
+        <!-- Contenu des onglets -->
+        <div id="tabContent">
+            {% block tab_content %}{% endblock %}
+        </div>
+    </div>
+
+    <script>
+        let isMobile = window.innerWidth <= 768;
+        let scrollTimeout;
+        let isScrolling = false;
+        let currentTab = 'epargne'; // Onglet par défaut
+
+        // Fonction pour détecter si on est sur mobile
+        function checkMobile() {
+            isMobile = window.innerWidth <= 768;
+        }
+
+        // Fonction pour détecter l'onglet au centre
+        function detectCenterTab() {
+            if (!isMobile) return;
+            
+            const navTabs = document.querySelector('.nav-tabs');
+            const tabs = document.querySelectorAll('.nav-tab');
+            const containerCenter = navTabs.offsetLeft + navTabs.offsetWidth / 2;
+            
+            let centerTab = null;
+            let minDistance = Infinity;
+            
+            tabs.forEach(tab => {
+                const tabCenter = tab.offsetLeft + tab.offsetWidth / 2;
+                const distance = Math.abs(tabCenter - containerCenter);
+                
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    centerTab = tab;
+                }
+            });
+            
+            return centerTab;
+        }
+
+        // Fonction pour naviguer vers l'onglet au centre
+        function navigateToCenterTab() {
+            if (!isMobile) return;
+            
+            const centerTab = detectCenterTab();
+            if (centerTab && !centerTab.classList.contains('active')) {
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(() => {
+                    switchTab(centerTab.dataset.tab);
+                }, 500);
+            }
+        }
+
+        // Écouter le défilement des onglets
+        function setupTabScrollDetection() {
+            if (!isMobile) return;
+            
+            const navTabs = document.querySelector('.nav-tabs');
+            
+            navTabs.addEventListener('scroll', () => {
+                isScrolling = true;
+                clearTimeout(scrollTimeout);
+                
+                scrollTimeout = setTimeout(() => {
+                    isScrolling = false;
+                    navigateToCenterTab();
+                }, 150);
+            });
+        }
+
+        // Fonction pour changer d'onglet
+        function switchTab(tabName) {
+            // Retirer la classe active de tous les onglets
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Masquer tout le contenu
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Activer l'onglet sélectionné
+            const activeTab = document.querySelector(`[data-tab="${tabName}"]`);
+            if (activeTab) {
+                activeTab.classList.add('active');
+            }
+
+            // Afficher le contenu correspondant
+            const activeContent = document.getElementById(`${tabName}Content`);
+            if (activeContent) {
+                activeContent.classList.add('active');
+            }
+
+            currentTab = tabName;
+            
+            // Charger le contenu dynamiquement si nécessaire
+            loadTabContent(tabName);
+        }
+
+        // Fonction pour charger le contenu d'un onglet
+        function loadTabContent(tabName) {
+            const contentContainer = document.getElementById(`${tabName}Content`);
+            
+            // Si le contenu n'est pas encore chargé, le charger
+            if (contentContainer && !contentContainer.hasAttribute('data-loaded')) {
+                fetch(`/api/tab-content/${tabName}`)
+                    .then(response => response.text())
+                    .then(html => {
+                        contentContainer.innerHTML = html;
+                        contentContainer.setAttribute('data-loaded', 'true');
+                    })
+                    .catch(error => {
+                        console.error('Erreur lors du chargement du contenu:', error);
+                    });
+            }
+        }
+
+        // Initialiser les onglets
+        function initTabs() {
+            // Ajouter les événements de clic
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const tabName = tab.dataset.tab;
+                    switchTab(tabName);
+                });
+            });
+
+            // Activer l'onglet par défaut
+            const defaultTab = document.querySelector('[data-tab="epargne"]');
+            if (defaultTab) {
+                defaultTab.classList.add('active');
+            }
+
+            const defaultContent = document.getElementById('epargneContent');
+            if (defaultContent) {
+                defaultContent.classList.add('active');
+            }
+        }
+
+        // Initialiser au chargement
+        window.addEventListener('load', () => {
+            checkMobile();
+            setupTabScrollDetection();
+            initTabs();
+        });
+
+        // Réinitialiser lors du redimensionnement
+        window.addEventListener('resize', () => {
+            checkMobile();
+            setupTabScrollDetection();
+        });
+
+        // Activer le mode sombre si configuré
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 

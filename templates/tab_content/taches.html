@@ -1,0 +1,322 @@
+<div class="tab-content" id="tachesContent">
+    <div class="content-container">
+        <div class="section-header">
+            <h2>📋 Mes Tâches</h2>
+            <a href="{{ url_for('formulaire_tache') }}" class="btn btn-primary">+ Nouvelle Tâche</a>
+        </div>
+
+        {% if taches %}
+            <div class="taches-grid">
+                {% for tache in taches %}
+                    <div class="tache-card">
+                        <div class="tache-header">
+                            <h3>{{ tache.titre }}</h3>
+                            <div class="tache-status {% if tache.terminee %}completed{% endif %}">
+                                {% if tache.terminee %}
+                                    ✅ Terminée
+                                {% else %}
+                                    ⏳ En cours
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="tache-progress">
+                            {% if tache.nombre_etapes > 0 %}
+                                <div class="progress-info">
+                                    <span>{{ tache.etapes_terminees }} / {{ tache.nombre_etapes }} étapes</span>
+                                    <span class="progress-percentage">{{ ((tache.etapes_terminees / tache.nombre_etapes) * 100) | round(1) }}%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: {{ ((tache.etapes_terminees / tache.nombre_etapes) * 100) | round(1) }}%"></div>
+                                </div>
+                            {% else %}
+                                <div class="no-steps">Aucune étape définie</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="tache-details">
+                            <p><strong>Description:</strong> {{ tache.description or 'Aucune description' }}</p>
+                            <p><strong>Priorité:</strong> 
+                                <span class="priority-{{ tache.priorite.lower() }}">
+                                    {% if tache.priorite == 'HAUTE' %}🔴 Haute
+                                    {% elif tache.priorite == 'MOYENNE' %}🟡 Moyenne
+                                    {% else %}🟢 Basse{% endif %}
+                                </span>
+                            </p>
+                            {% if tache.date_limite %}
+                                <p><strong>Date limite:</strong> {{ tache.date_limite }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="tache-actions">
+                            <a href="{{ url_for('tache_detail', tache_id=tache.id) }}" class="btn btn-secondary">Voir détails</a>
+                            <a href="{{ url_for('formulaire_tache', tache_id=tache.id) }}" class="btn btn-primary">Modifier</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <h3>📋 Aucune tâche</h3>
+                <p>Créez votre première tâche pour commencer à organiser votre travail !</p>
+                <a href="{{ url_for('formulaire_tache') }}" class="btn btn-primary">Créer une tâche</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .content-container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .dark-mode .content-container {
+        background-color: rgba(30, 30, 30, 0.95);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+
+    .section-header h2 {
+        color: #667eea;
+        font-size: 1.8em;
+    }
+
+    .dark-mode .section-header h2 {
+        color: #76c7c0;
+    }
+
+    .taches-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 20px;
+    }
+
+    .tache-card {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 25px;
+        border-left: 4px solid #667eea;
+        transition: all 0.3s ease;
+    }
+
+    .tache-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .dark-mode .tache-card {
+        background-color: rgba(40, 40, 40, 0.8);
+        border-left-color: #76c7c0;
+    }
+
+    .tache-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .tache-header h3 {
+        color: #333;
+        font-size: 1.3em;
+        margin: 0;
+    }
+
+    .dark-mode .tache-header h3 {
+        color: #e0e0e0;
+    }
+
+    .tache-status {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.9em;
+        font-weight: 500;
+    }
+
+    .tache-status.completed {
+        background: #28a745;
+        color: white;
+    }
+
+    .tache-status:not(.completed) {
+        background: #ffc107;
+        color: #333;
+    }
+
+    .tache-progress {
+        margin-bottom: 15px;
+    }
+
+    .progress-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 0.9em;
+        color: #666;
+    }
+
+    .dark-mode .progress-info {
+        color: #ccc;
+    }
+
+    .progress-percentage {
+        font-weight: bold;
+        color: #667eea;
+    }
+
+    .dark-mode .progress-percentage {
+        color: #76c7c0;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: #e0e0e0;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        transition: width 0.3s ease;
+    }
+
+    .no-steps {
+        color: #999;
+        font-style: italic;
+        font-size: 0.9em;
+    }
+
+    .dark-mode .no-steps {
+        color: #777;
+    }
+
+    .tache-details {
+        margin-bottom: 20px;
+    }
+
+    .tache-details p {
+        margin: 5px 0;
+        color: #666;
+        font-size: 0.9em;
+    }
+
+    .dark-mode .tache-details p {
+        color: #ccc;
+    }
+
+    .priority-haute {
+        color: #e74c3c;
+    }
+
+    .priority-moyenne {
+        color: #f39c12;
+    }
+
+    .priority-basse {
+        color: #27ae60;
+    }
+
+    .tache-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9em;
+    }
+
+    .btn-primary {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #5a6fd8;
+        transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+    }
+
+    .dark-mode .empty-state {
+        color: #ccc;
+    }
+
+    .empty-state h3 {
+        margin-bottom: 15px;
+        color: #667eea;
+        font-size: 1.5em;
+    }
+
+    .dark-mode .empty-state h3 {
+        color: #76c7c0;
+    }
+
+    .empty-state p {
+        margin-bottom: 25px;
+        font-size: 1.1em;
+    }
+
+    @media (max-width: 768px) {
+        .content-container {
+            padding: 20px;
+        }
+
+        .taches-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .tache-card {
+            padding: 20px;
+        }
+
+        .section-header {
+            flex-direction: column;
+            gap: 15px;
+            align-items: stretch;
+        }
+
+        .tache-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .tache-actions {
+            flex-direction: column;
+        }
+    }
+</style> 

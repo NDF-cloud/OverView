@@ -1,0 +1,320 @@
+<div class="tab-content active" id="epargneContent">
+    <div class="content-container">
+        <div class="stats-overview">
+            <div class="stat-card">
+                <h3>💰 Total Épargne</h3>
+                <div class="stat-value">{{ format_currency(total_general) }}</div>
+            </div>
+        </div>
+
+        <div class="objectifs-section">
+            <div class="section-header">
+                <h2>🎯 Mes Objectifs d'Épargne</h2>
+                <a href="{{ url_for('formulaire_objectif') }}" class="btn btn-primary">+ Nouvel Objectif</a>
+            </div>
+
+            {% if objectifs %}
+                <div class="objectifs-grid">
+                    {% for objectif in objectifs %}
+                        <div class="objectif-card">
+                            <div class="objectif-header">
+                                <h3>{{ objectif.nom }}</h3>
+                                <div class="objectif-status {% if objectif.montant_actuel >= objectif.montant_cible %}completed{% endif %}">
+                                    {% if objectif.montant_actuel >= objectif.montant_cible %}
+                                        ✅ Atteint
+                                    {% else %}
+                                        🎯 En cours
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="objectif-progress">
+                                <div class="progress-info">
+                                    <span>{{ format_currency(objectif.montant_actuel) }} / {{ format_currency(objectif.montant_cible) }}</span>
+                                    <span class="progress-percentage">{{ ((objectif.montant_actuel / objectif.montant_cible) * 100) | round(1) }}%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: {{ ((objectif.montant_actuel / objectif.montant_cible) * 100) | round(1) }}%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="objectif-details">
+                                <p><strong>Description:</strong> {{ objectif.description or 'Aucune description' }}</p>
+                                <p><strong>Date limite:</strong> {{ objectif.date_limite }}</p>
+                                <p><strong>Transactions:</strong> {{ objectif.nombre_transactions }}</p>
+                            </div>
+                            
+                            <div class="objectif-actions">
+                                <a href="{{ url_for('objectif_detail', objectif_id=objectif.id) }}" class="btn btn-secondary">Voir détails</a>
+                                <a href="{{ url_for('formulaire_objectif', objectif_id=objectif.id) }}" class="btn btn-primary">Modifier</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <h3>🎯 Aucun objectif d'épargne</h3>
+                    <p>Créez votre premier objectif pour commencer à épargner !</p>
+                    <a href="{{ url_for('formulaire_objectif') }}" class="btn btn-primary">Créer un objectif</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .content-container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .dark-mode .content-container {
+        background-color: rgba(30, 30, 30, 0.95);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    .stats-overview {
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 25px;
+        border-radius: 15px;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .stat-card h3 {
+        margin-bottom: 10px;
+        font-size: 1.2em;
+    }
+
+    .stat-value {
+        font-size: 2.5em;
+        font-weight: bold;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+
+    .section-header h2 {
+        color: #667eea;
+        font-size: 1.8em;
+    }
+
+    .dark-mode .section-header h2 {
+        color: #76c7c0;
+    }
+
+    .objectifs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 20px;
+    }
+
+    .objectif-card {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 25px;
+        border-left: 4px solid #667eea;
+        transition: all 0.3s ease;
+    }
+
+    .objectif-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .dark-mode .objectif-card {
+        background-color: rgba(40, 40, 40, 0.8);
+        border-left-color: #76c7c0;
+    }
+
+    .objectif-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .objectif-header h3 {
+        color: #333;
+        font-size: 1.3em;
+        margin: 0;
+    }
+
+    .dark-mode .objectif-header h3 {
+        color: #e0e0e0;
+    }
+
+    .objectif-status {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.9em;
+        font-weight: 500;
+    }
+
+    .objectif-status.completed {
+        background: #28a745;
+        color: white;
+    }
+
+    .objectif-status:not(.completed) {
+        background: #ffc107;
+        color: #333;
+    }
+
+    .objectif-progress {
+        margin-bottom: 15px;
+    }
+
+    .progress-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 0.9em;
+        color: #666;
+    }
+
+    .dark-mode .progress-info {
+        color: #ccc;
+    }
+
+    .progress-percentage {
+        font-weight: bold;
+        color: #667eea;
+    }
+
+    .dark-mode .progress-percentage {
+        color: #76c7c0;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: #e0e0e0;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        transition: width 0.3s ease;
+    }
+
+    .objectif-details {
+        margin-bottom: 20px;
+    }
+
+    .objectif-details p {
+        margin: 5px 0;
+        color: #666;
+        font-size: 0.9em;
+    }
+
+    .dark-mode .objectif-details p {
+        color: #ccc;
+    }
+
+    .objectif-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9em;
+    }
+
+    .btn-primary {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #5a6fd8;
+        transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+    }
+
+    .dark-mode .empty-state {
+        color: #ccc;
+    }
+
+    .empty-state h3 {
+        margin-bottom: 15px;
+        color: #667eea;
+        font-size: 1.5em;
+    }
+
+    .dark-mode .empty-state h3 {
+        color: #76c7c0;
+    }
+
+    .empty-state p {
+        margin-bottom: 25px;
+        font-size: 1.1em;
+    }
+
+    @media (max-width: 768px) {
+        .content-container {
+            padding: 20px;
+        }
+
+        .objectifs-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .objectif-card {
+            padding: 20px;
+        }
+
+        .section-header {
+            flex-direction: column;
+            gap: 15px;
+            align-items: stretch;
+        }
+
+        .objectif-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .objectif-actions {
+            flex-direction: column;
+        }
+    }
+</style> 

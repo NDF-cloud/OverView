@@ -1056,36 +1056,8 @@ def reset_password_final():
 @app.route('/')
 @login_required
 def index():
-    user_id = session['user_id']
-    conn = get_db_connection()
-    cur = get_cursor(conn)
-    is_postgres = bool(os.environ.get('DATABASE_URL'))
-
-    try:
-        sql = sql_placeholder("SELECT * FROM objectifs WHERE status = 'actif' AND user_id = ? ORDER BY id DESC")
-        cur.execute(sql, (user_id,))
-        objectifs_db = cur.fetchall()
-        sql = sql_placeholder("SELECT SUM(montant_actuel) as total FROM objectifs WHERE status = 'actif' AND user_id = ?")
-        cur.execute(sql, (user_id,))
-        total_epargne_result = cur.fetchone()
-    finally:
-        cur.close()
-        conn.close()
-
-    if is_postgres:
-        total_epargne = total_epargne_result['total'] if total_epargne_result and total_epargne_result['total'] is not None else 0
-        objectifs = [dict(obj) for obj in objectifs_db]
-    else:
-        total_epargne = total_epargne_result[0] if total_epargne_result and total_epargne_result[0] is not None else 0
-        objectifs = [convert_to_dict(obj, is_postgres=False) for obj in objectifs_db]
-
-    # Convertir le total vers la devise système
-    total_epargne_converti = convert_amount_to_system_currency(total_epargne, 'XAF')
-
-    for obj in objectifs:
-        progression = (obj['montant_actuel'] / obj['montant_cible']) * 100 if obj['montant_cible'] > 0 else 0
-        obj['progression'] = progression
-    return render_template('index.html', objectifs=objectifs, total_epargne=total_epargne_converti, format_currency=format_currency, get_currency_symbol=get_currency_symbol, t=t, get_current_language=get_current_language)
+    """Page d'accueil - redirige vers le système d'onglets unique"""
+    return redirect(url_for('app_main'))
 
 @app.route('/archives')
 @login_required
@@ -3083,6 +3055,172 @@ init_database_tables()
 @app.route('/manifest.json')
 def manifest():
     return send_file('manifest.json', mimetype='application/json')
+
+# ==============================================================================
+# ROUTES API POUR LE CONTENU DES ONGLETS
+# ==============================================================================
+
+@app.route('/api/tab-content/<tab_name>')
+@login_required
+def tab_content(tab_name):
+    """Sert le contenu HTML d'un onglet spécifique"""
+
+    if tab_name == 'epargne':
+        # Contenu de l'onglet Épargne
+        conn = get_db_connection()
+        with SQLiteCursorWrapper(conn.cursor()) as cursor:
+            cursor.execute("""
+                SELECT o.*,
+                       COALESCE(SUM(t.montant), 0) as total_epargne,
+                       COUNT(t.id) as nombre_transactions
+                FROM objectifs o
+                LEFT JOIN transactions t ON o.id = t.objectif_id
+                WHERE o.user_id = ? AND o.archivé = 0
+                GROUP BY o.id
+                ORDER BY o.date_limite ASC
+            """, (session['user_id'],))
+            objectifs = [convert_to_dict(row) for row in cursor.fetchall()]
+
+            # Calculer le total général
+            total_general = sum(obj['total_epargne'] for obj in objectifs)
+
+        conn.close()
+
+        return render_template('tab_content/epargne.html',
+                             objectifs=objectifs,
+                             total_general=total_general)
+
+    elif tab_name == 'taches':
+        # Contenu de l'onglet Tâches
+        conn = get_db_connection()
+        with SQLiteCursorWrapper(conn.cursor()) as cursor:
+            cursor.execute("""
+                SELECT t.*,
+                       COUNT(e.id) as nombre_etapes,
+                       SUM(CASE WHEN e.terminee THEN 1 ELSE 0 END) as etapes_terminees
+                FROM taches t
+                LEFT JOIN etapes e ON t.id = e.tache_id
+                WHERE t.user_id = ? AND t.archivé = 0
+                GROUP BY t.id
+                ORDER BY t.date_limite ASC
+            """, (session['user_id'],))
+            taches = [convert_tache_to_dict(row) for row in cursor.fetchall()]
+
+        conn.close()
+
+        return render_template('tab_content/taches.html', taches=taches)
+
+    elif tab_name == 'agenda':
+        # Contenu de l'onglet Agenda
+        conn = get_db_connection()
+        with SQLiteCursorWrapper(conn.cursor()) as cursor:
+            cursor.execute("""
+                SELECT * FROM evenements
+                WHERE user_id = ? AND date_debut >= date('now')
+                ORDER BY date_debut ASC
+            """, (session['user_id'],))
+            evenements = [convert_evenement_to_dict(row) for row in cursor.fetchall()]
+
+        conn.close()
+
+        return render_template('tab_content/agenda.html', evenements=evenements)
+
+    elif tab_name == 'dashboard':
+        # Contenu de l'onglet Dashboard
+        conn = get_db_connection()
+        with SQLiteCursorWrapper(conn.cursor()) as cursor:
+            # Statistiques des objectifs
+            cursor.execute("""
+                SELECT COUNT(*) as total_objectifs,
+                       SUM(CASE WHEN date_limite < date('now') THEN 1 ELSE 0 END) as objectifs_en_retard,
+                       SUM(CASE WHEN montant_actuel >= montant_cible THEN 1 ELSE 0 END) as objectifs_atteints
+                FROM objectifs
+                WHERE user_id = ? AND archivé = 0
+            """, (session['user_id'],))
+            stats_objectifs = convert_to_dict(cursor.fetchone())
+
+            # Statistiques des tâches
+            cursor.execute("""
+                SELECT COUNT(*) as total_taches,
+                       SUM(CASE WHEN date_limite < date('now') THEN 1 ELSE 0 END) as taches_en_retard,
+                       SUM(CASE WHEN terminee THEN 1 ELSE 0 END) as taches_terminees
+                FROM taches
+                WHERE user_id = ? AND archivé = 0
+            """, (session['user_id'],))
+            stats_taches = convert_to_dict(cursor.fetchone())
+
+        conn.close()
+
+        return render_template('tab_content/dashboard.html',
+                             stats_objectifs=stats_objectifs,
+                             stats_taches=stats_taches)
+
+    elif tab_name == 'notifications':
+        # Contenu de l'onglet Notifications
+        conn = get_db_connection()
+        with SQLiteCursorWrapper(conn.cursor()) as cursor:
+            cursor.execute("""
+                SELECT * FROM notifications
+                WHERE user_id = ?
+                ORDER BY date_creation DESC
+                LIMIT 50
+            """, (session['user_id'],))
+            notifications = [convert_to_dict(row) for row in cursor.fetchall()]
+
+        conn.close()
+
+        return render_template('tab_content/notifications.html', notifications=notifications)
+
+    elif tab_name == 'rapports':
+        # Contenu de l'onglet Rapports
+        conn = get_db_connection()
+        with SQLiteCursorWrapper(conn.cursor()) as cursor:
+            # Statistiques générales
+            cursor.execute("""
+                SELECT
+                    COUNT(DISTINCT o.id) as total_objectifs,
+                    COUNT(DISTINCT t.id) as total_taches,
+                    COUNT(DISTINCT e.id) as total_evenements,
+                    SUM(COALESCE(tr.montant, 0)) as total_epargne
+                FROM objectifs o
+                LEFT JOIN taches t ON t.user_id = o.user_id
+                LEFT JOIN evenements e ON e.user_id = o.user_id
+                LEFT JOIN transactions tr ON tr.objectif_id = o.id
+                WHERE o.user_id = ?
+            """, (session['user_id'],))
+            stats_generales = convert_to_dict(cursor.fetchone())
+
+        conn.close()
+
+        return render_template('tab_content/rapports.html', stats_generales=stats_generales)
+
+    else:
+        return "Onglet non trouvé", 404
+
+@app.route('/supprimer_notification/<int:notification_id>', methods=['POST'])
+@login_required
+def supprimer_notification(notification_id):
+    """Supprimer une notification"""
+    conn = get_db_connection()
+    with SQLiteCursorWrapper(conn.cursor()) as cursor:
+        cursor.execute("""
+            DELETE FROM notifications 
+            WHERE id = ? AND user_id = ?
+        """, (notification_id, session['user_id']))
+        conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True})
+
+# ==============================================================================
+# ROUTE PRINCIPALE AVEC ONGLETS UNIQUES
+# ==============================================================================
+
+@app.route('/app')
+@login_required
+def app_main():
+    """Page principale avec système d'onglets unique"""
+    return render_template('base_with_tabs.html')
 
 # --- Point de démarrage ---
 if __name__ == '__main__':
