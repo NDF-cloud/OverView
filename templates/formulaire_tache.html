@@ -187,15 +187,120 @@
         }
 
         /* Styles Responsive */
-        @media (max-width: 600px) {
-            body { padding: 10px; }
-            .container { padding: 0; }
-            .header { flex-direction: column; align-items: center; text-align: center; padding: 15px; }
-            .header-info { margin-bottom: 10px; }
-            .header-info h1 { font-size: 1.8em; }
-            .header-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-            .header-buttons a { margin: 0 4px; padding: 8px 12px; font-size: 1.2em; }
-            .form-container { padding: 20px; }
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .form-container {
+                padding: 20px;
+            }
+
+            /* Amélioration des boutons sur mobile */
+            .btn-primary,
+            .btn-secondary {
+                width: 100%;
+                margin: 10px 0;
+                padding: 15px 20px;
+                font-size: 1.1em;
+            }
+
+            /* Optimisation des formulaires */
+            .form-group {
+                margin-bottom: 25px;
+            }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 600;
+                color: white;
+            }
+
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                width: 100%;
+                padding: 15px;
+                border-radius: 8px;
+                border: 2px solid rgba(255,255,255,0.2);
+                font-size: 16px;
+                background: rgba(255,255,255,0.1);
+                color: white;
+            }
+
+            .form-group input:focus,
+            .form-group select:focus,
+            .form-group textarea:focus {
+                border-color: #667eea;
+                outline: none;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+            }
+
+            /* Correction pour les boutons du header */
+            .header > div:last-child {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                align-items: center;
+            }
+
+            .header > div:last-child a {
+                width: 100%;
+                max-width: 200px;
+                text-align: center;
+                margin: 0 !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .form-container {
+                padding: 15px;
+            }
+
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                padding: 15px;
+                font-size: 16px;
+            }
+
+            .btn-primary,
+            .btn-secondary {
+                padding: 18px 20px;
+                font-size: 1.2em;
+            }
+
+            /* Amélioration pour très petits écrans */
+            .form-container h2 {
+                font-size: 1.3em;
+                margin-bottom: 20px;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            .form-group label {
+                font-size: 1em;
+                margin-bottom: 10px;
+            }
         }
     </style>
 </head>

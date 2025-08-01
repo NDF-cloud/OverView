@@ -266,6 +266,21 @@
             .section-title {
                 font-size: 1.5em;
             }
+
+            /* Correction pour les boutons du header */
+            .header > div:last-child {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                align-items: center;
+            }
+
+            .header > div:last-child a {
+                width: 100%;
+                max-width: 200px;
+                text-align: center;
+                margin: 0 !important;
+            }
         }
 
         @media (max-width: 480px) {
@@ -298,6 +313,24 @@
             .chart-percentage {
                 font-size: 2em;
             }
+
+            /* Amélioration pour très petits écrans */
+            .nav-tabs {
+                flex-direction: column;
+                gap: 3px;
+            }
+
+            .nav-tab {
+                flex: none;
+                width: 100%;
+                margin: 1px 0;
+            }
+
+            .header > div:last-child a {
+                font-size: 0.9em;
+                padding: 8px 16px;
+            }
+        }
 
             .section-title {
                 font-size: 1.3em;

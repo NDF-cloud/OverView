@@ -392,6 +392,9 @@
             .transaction-form select,
             .transaction-form button {
                 width: 100%;
+                margin: 5px 0;
+                padding: 15px;
+                font-size: 16px;
             }
 
             .history-table {
@@ -401,6 +404,86 @@
             .history-table th,
             .history-table td {
                 padding: 10px;
+            }
+
+            /* Amélioration des boutons sur mobile */
+            .header-buttons a {
+                width: 100%;
+                max-width: 200px;
+                text-align: center;
+                margin: 10px 0;
+                padding: 15px 20px;
+                font-size: 1.1em;
+            }
+
+            /* Optimisation des cartes de statistiques */
+            .stat-card {
+                padding: 20px;
+                margin-bottom: 15px;
+            }
+
+            .stat-number {
+                font-size: 1.8em;
+            }
+
+            /* Amélioration du formulaire de transaction */
+            .transaction-section {
+                padding: 20px;
+            }
+
+            .transaction-form {
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 1.6em;
+            }
+
+            .stats-grid {
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+
+            .stat-number {
+                font-size: 1.5em;
+            }
+
+            .transaction-form input,
+            .transaction-form select,
+            .transaction-form button {
+                padding: 18px 20px;
+                font-size: 1.2em;
+            }
+
+            .header-buttons a {
+                padding: 18px 20px;
+                font-size: 1.2em;
+            }
+
+            /* Amélioration pour très petits écrans */
+            .progress-section {
+                padding: 15px;
+            }
+
+            .chart-section {
+                padding: 15px;
+            }
+
+            .history-section {
+                padding: 15px;
             }
         }
     </style>
