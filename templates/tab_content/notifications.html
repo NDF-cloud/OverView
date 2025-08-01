@@ -196,28 +196,4 @@
     }
 </style>
 
-<script>
-    function confirmerSuppressionNotification(notificationId) {
-        if (confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) {
-            fetch(`/supprimer_notification/${notificationId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Recharger le contenu de l'onglet
-                    loadTabContent('notifications');
-                } else {
-                    alert('Erreur lors de la suppression de la notification');
-                }
-            })
-            .catch(error => {
-                console.error('Erreur:', error);
-                alert('Erreur lors de la suppression de la notification');
-            });
-        }
-    }
-</script> 
+<script src="{{ url_for('static', filename='notifications.js') }}"></script> 

@@ -3204,12 +3204,12 @@ def supprimer_notification(notification_id):
     conn = get_db_connection()
     with SQLiteCursorWrapper(conn.cursor()) as cursor:
         cursor.execute("""
-            DELETE FROM notifications 
+            DELETE FROM notifications
             WHERE id = ? AND user_id = ?
         """, (notification_id, session['user_id']))
         conn.commit()
     conn.close()
-    
+
     return jsonify({'success': True})
 
 # ==============================================================================
