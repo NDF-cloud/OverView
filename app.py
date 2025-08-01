@@ -3075,7 +3075,7 @@ def tab_content(tab_name):
                        COUNT(t.id) as nombre_transactions
                 FROM objectifs o
                 LEFT JOIN transactions t ON o.id = t.objectif_id
-                WHERE o.user_id = ? AND o.archivé = 0
+                WHERE o.user_id = %s AND o.archivé = 0
                 GROUP BY o.id
                 ORDER BY o.date_limite ASC
             """, (session['user_id'],))
@@ -3100,7 +3100,7 @@ def tab_content(tab_name):
                        SUM(CASE WHEN e.terminee THEN 1 ELSE 0 END) as etapes_terminees
                 FROM taches t
                 LEFT JOIN etapes e ON t.id = e.tache_id
-                WHERE t.user_id = ? AND t.archivé = 0
+                WHERE t.user_id = %s AND t.archivé = 0
                 GROUP BY t.id
                 ORDER BY t.date_limite ASC
             """, (session['user_id'],))
@@ -3116,7 +3116,7 @@ def tab_content(tab_name):
         with SQLiteCursorWrapper(conn.cursor()) as cursor:
             cursor.execute("""
                 SELECT * FROM evenements
-                WHERE user_id = ? AND date_debut >= date('now')
+                WHERE user_id = %s AND date_debut >= date('now')
                 ORDER BY date_debut ASC
             """, (session['user_id'],))
             evenements = [convert_evenement_to_dict(row) for row in cursor.fetchall()]
@@ -3135,7 +3135,7 @@ def tab_content(tab_name):
                        SUM(CASE WHEN date_limite < date('now') THEN 1 ELSE 0 END) as objectifs_en_retard,
                        SUM(CASE WHEN montant_actuel >= montant_cible THEN 1 ELSE 0 END) as objectifs_atteints
                 FROM objectifs
-                WHERE user_id = ? AND archivé = 0
+                WHERE user_id = %s AND archivé = 0
             """, (session['user_id'],))
             stats_objectifs = convert_to_dict(cursor.fetchone())
 
@@ -3145,7 +3145,7 @@ def tab_content(tab_name):
                        SUM(CASE WHEN date_limite < date('now') THEN 1 ELSE 0 END) as taches_en_retard,
                        SUM(CASE WHEN terminee THEN 1 ELSE 0 END) as taches_terminees
                 FROM taches
-                WHERE user_id = ? AND archivé = 0
+                WHERE user_id = %s AND archivé = 0
             """, (session['user_id'],))
             stats_taches = convert_to_dict(cursor.fetchone())
 
@@ -3161,7 +3161,7 @@ def tab_content(tab_name):
         with SQLiteCursorWrapper(conn.cursor()) as cursor:
             cursor.execute("""
                 SELECT * FROM notifications
-                WHERE user_id = ?
+                WHERE user_id = %s
                 ORDER BY date_creation DESC
                 LIMIT 50
             """, (session['user_id'],))
@@ -3186,7 +3186,7 @@ def tab_content(tab_name):
                 LEFT JOIN taches t ON t.user_id = o.user_id
                 LEFT JOIN evenements e ON e.user_id = o.user_id
                 LEFT JOIN transactions tr ON tr.objectif_id = o.id
-                WHERE o.user_id = ?
+                WHERE o.user_id = %s
             """, (session['user_id'],))
             stats_generales = convert_to_dict(cursor.fetchone())
 
