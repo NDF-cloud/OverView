@@ -1,0 +1,5 @@
+[33m19f2f2a[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Application du style grille 2x3 sur tous les onglets - Navigation responsive uniforme sur toutes les pages - Design mobile cohérent avec arriere-plan degrade violet - Effets visuels et animations sur tous les onglets
+[33m3b1bb99[m Disposition mobile des onglets en grille 2x3 - Navigation responsive avec design moderne - Grille 2 colonnes x 3 lignes pour mobile - Arriere-plan degrade violet avec effets visuels
+[33m493a574[m Restauration des boutons paramètres et nouvel objectif - Bouton paramètres (⚙) positionné sous le nom d'utilisateur - Bouton nouvel objectif (+) au-dessus des archives - Interface optimisée et responsive
+[33mf9dc976[m Amélioration de l'interface responsive et optimisation des boutons - Retrait des boutons paramètres et nouvel objectif de la page épargne - Amélioration du design mobile sur toutes les pages - Optimisation des formulaires pour mobile
+[33m3b53e86[m Fix Decimal vs float error in add_transaction function

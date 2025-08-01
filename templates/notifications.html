@@ -352,16 +352,40 @@
                 font-size: 1.1em;
             }
 
-            /* Amélioration pour très petits écrans */
             .nav-tabs {
-                flex-direction: column;
-                gap: 3px;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: repeat(3, 1fr);
+                gap: 8px;
+                padding: 15px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-radius: 15px;
+                margin: 15px 0;
             }
 
             .nav-tab {
-                flex: none;
-                width: 100%;
-                margin: 1px 0;
+                background: rgba(255,255,255,0.1);
+                color: white;
+                padding: 12px 8px;
+                border-radius: 10px;
+                text-decoration: none;
+                text-align: center;
+                font-weight: 500;
+                font-size: 0.9em;
+                transition: all 0.3s ease;
+                border: 1px solid rgba(255,255,255,0.2);
+                backdrop-filter: blur(10px);
+            }
+
+            .nav-tab:hover {
+                background: rgba(255,255,255,0.2);
+                transform: translateY(-2px);
+            }
+
+            .nav-tab.active {
+                background: rgba(255,255,255,0.3);
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                transform: translateY(-2px);
             }
 
             .header > div:last-child a {
