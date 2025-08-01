@@ -3,6 +3,34 @@ let scrollTimeout;
 let isScrolling = false;
 let currentTab = 'epargne'; // Onglet par défaut
 
+// Titres dynamiques pour chaque onglet
+const tabTitles = {
+    'epargne': {
+        title: 'Épargne',
+        subtitle: 'Gérez vos objectifs d\'épargne'
+    },
+    'taches': {
+        title: 'Tâches',
+        subtitle: 'Organisez vos tâches et étapes'
+    },
+    'agenda': {
+        title: 'Agenda',
+        subtitle: 'Planifiez vos événements'
+    },
+    'dashboard': {
+        title: 'Dashboard',
+        subtitle: 'Vue d\'ensemble de vos finances'
+    },
+    'notifications': {
+        title: 'Notifications',
+        subtitle: 'Centre de notifications'
+    },
+    'rapports': {
+        title: 'Rapports',
+        subtitle: 'Exportez vos données'
+    }
+};
+
 // Fonction pour détecter si on est sur mobile
 function checkMobile() {
     isMobile = window.innerWidth <= 768;
@@ -62,16 +90,22 @@ function setupTabScrollDetection() {
     });
 }
 
+// Fonction pour mettre à jour les titres dynamiques
+function updateDynamicTitles(tabName) {
+    const titleElement = document.getElementById('dynamicTitle');
+    const subtitleElement = document.getElementById('dynamicSubtitle');
+    
+    if (tabTitles[tabName]) {
+        titleElement.textContent = tabTitles[tabName].title;
+        subtitleElement.textContent = tabTitles[tabName].subtitle;
+    }
+}
+
 // Fonction pour changer d'onglet
 function switchTab(tabName) {
     // Retirer la classe active de tous les onglets
     document.querySelectorAll('.nav-tab').forEach(tab => {
         tab.classList.remove('active');
-    });
-
-    // Masquer tout le contenu
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
     });
 
     // Activer l'onglet sélectionné
@@ -80,34 +114,55 @@ function switchTab(tabName) {
         activeTab.classList.add('active');
     }
 
-    // Afficher le contenu correspondant
-    const activeContent = document.getElementById(`${tabName}Content`);
-    if (activeContent) {
-        activeContent.classList.add('active');
-    }
+    // Mettre à jour les titres dynamiques
+    updateDynamicTitles(tabName);
 
     currentTab = tabName;
     
-    // Charger le contenu dynamiquement si nécessaire
+    // Charger le contenu dynamiquement
     loadTabContent(tabName);
 }
 
 // Fonction pour charger le contenu d'un onglet
 function loadTabContent(tabName) {
-    const contentContainer = document.getElementById(`${tabName}Content`);
+    const contentContainer = document.getElementById('tabContent');
     
-    // Si le contenu n'est pas encore chargé, le charger
-    if (contentContainer && !contentContainer.hasAttribute('data-loaded')) {
-        fetch(`/api/tab-content/${tabName}`)
-            .then(response => response.text())
-            .then(html => {
-                contentContainer.innerHTML = html;
-                contentContainer.setAttribute('data-loaded', 'true');
-            })
-            .catch(error => {
-                console.error('Erreur lors du chargement du contenu:', error);
-            });
-    }
+    // Charger le contenu complet de la page
+    fetch(`/api/tab-content/${tabName}`)
+        .then(response => response.text())
+        .then(html => {
+            // Créer un DOM temporaire pour parser le HTML
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Extraire le contenu principal (sans les en-têtes et barres d'onglets)
+            const mainContent = doc.querySelector('.container') || doc.querySelector('main') || doc.querySelector('.content');
+            
+            if (mainContent) {
+                // Supprimer les éléments de navigation et en-têtes
+                const elementsToRemove = mainContent.querySelectorAll('.nav-tabs-container, .header, .nav-tabs, .tab-navigation');
+                elementsToRemove.forEach(el => el.remove());
+                
+                // Injecter le contenu principal
+                contentContainer.innerHTML = mainContent.innerHTML;
+            } else {
+                // Fallback : utiliser tout le contenu du body
+                const bodyContent = doc.querySelector('body');
+                if (bodyContent) {
+                    // Supprimer les scripts et styles
+                    const scriptsAndStyles = bodyContent.querySelectorAll('script, style, link');
+                    scriptsAndStyles.forEach(el => el.remove());
+                    
+                    contentContainer.innerHTML = bodyContent.innerHTML;
+                } else {
+                    contentContainer.innerHTML = html;
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors du chargement du contenu:', error);
+            contentContainer.innerHTML = '<div style="text-align: center; padding: 50px;"><h2>Erreur de chargement</h2><p>Impossible de charger le contenu de cet onglet.</p></div>';
+        });
 }
 
 // Initialiser les onglets
@@ -127,10 +182,8 @@ function initTabs() {
         defaultTab.classList.add('active');
     }
 
-    const defaultContent = document.getElementById('epargneContent');
-    if (defaultContent) {
-        defaultContent.classList.add('active');
-    }
+    // Charger le contenu par défaut
+    loadTabContent('epargne');
 }
 
 // Initialiser au chargement

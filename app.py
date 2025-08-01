@@ -3086,7 +3086,7 @@ def tab_content(tab_name):
 
         conn.close()
 
-        return render_template('tab_content/epargne.html',
+        return render_template('index.html',
                              objectifs=objectifs,
                              total_general=total_general)
 
@@ -3108,7 +3108,7 @@ def tab_content(tab_name):
 
         conn.close()
 
-        return render_template('tab_content/taches.html', taches=taches)
+        return render_template('taches.html', taches=taches)
 
     elif tab_name == 'agenda':
         # Contenu de l'onglet Agenda
@@ -3123,7 +3123,7 @@ def tab_content(tab_name):
 
         conn.close()
 
-        return render_template('tab_content/agenda.html', evenements=evenements)
+        return render_template('calendrier.html', evenements=evenements)
 
     elif tab_name == 'dashboard':
         # Contenu de l'onglet Dashboard
@@ -3151,7 +3151,7 @@ def tab_content(tab_name):
 
         conn.close()
 
-        return render_template('tab_content/dashboard.html',
+        return render_template('dashboard.html',
                              stats_objectifs=stats_objectifs,
                              stats_taches=stats_taches)
 
@@ -3169,7 +3169,7 @@ def tab_content(tab_name):
 
         conn.close()
 
-        return render_template('tab_content/notifications.html', notifications=notifications)
+        return render_template('notifications.html', notifications=notifications)
 
     elif tab_name == 'rapports':
         # Contenu de l'onglet Rapports
@@ -3192,7 +3192,7 @@ def tab_content(tab_name):
 
         conn.close()
 
-        return render_template('tab_content/rapports.html', stats_generales=stats_generales)
+        return render_template('rapports.html', stats_generales=stats_generales)
 
     else:
         return "Onglet non trouvé", 404
