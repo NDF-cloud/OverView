@@ -781,10 +781,10 @@ def convert_etape_to_dict(row, is_postgres=False):
     if is_postgres:
         return dict(row)
     else:
-        # Pour SQLite, structure de la table etapes: id, tache_id, description, terminee, ordre, date_creation, date_modification
+        # Pour SQLite, structure de la table etapes: id, tache_id, titre, terminee, ordre
         return {
             'id': row[0], 'tache_id': row[1], 'description': row[2], 'terminee': row[3],
-            'ordre': row[4], 'date_creation': row[5], 'date_modification': row[6]
+            'ordre': row[4]
         }
 
 def format_currency(amount, currency=None):
@@ -1710,7 +1710,13 @@ def sauvegarder_tache(tache_id):
         if etapes_text.strip():
             etapes_list = [etape.strip() for etape in etapes_text.split('\n') if etape.strip()]
             for i, etape in enumerate(etapes_list):
-                sql_etape = sql_placeholder('INSERT INTO etapes (tache_id, description, ordre) VALUES (?, ?, ?)')
+                # Gérer la différence entre SQLite (titre) et PostgreSQL (description)
+                if os.environ.get('DATABASE_URL'):
+                    # PostgreSQL
+                    sql_etape = sql_placeholder('INSERT INTO etapes (tache_id, description, ordre) VALUES (?, ?, ?)')
+                else:
+                    # SQLite
+                    sql_etape = sql_placeholder('INSERT INTO etapes (tache_id, titre, ordre) VALUES (?, ?, ?)')
                 cur.execute(sql_etape, (tache_id, etape, i + 1))
 
         conn.commit()
