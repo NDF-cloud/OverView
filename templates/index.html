@@ -265,7 +265,9 @@
                         <span style="color: #ffd700; font-size: 1.2em; margin-right: 8px;">👤</span>
                         <span style="color: white; font-weight: 600; font-size: 1.1em;">{{ session.username }}</span>
                     </div>
-
+                    <div style="margin-top: 8px; text-align: center;">
+                        <a href="{{ url_for('parametres') }}" style="background: rgba(255,255,255,0.2); color: white; padding: 8px 12px; border-radius: 50%; text-decoration: none; display: inline-block; transition: all 0.3s ease; font-size: 1.2em;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'" title="{{ t('settings') }}">⚙</a>
+                    </div>
                 </div>
                 <div>
                     <h1>💰 {{ t('savings_overview') }}</h1>
@@ -299,7 +301,9 @@
             </div>
           {% endif %}
         {% endwith %}
-
+        <div style="margin-bottom: 15px; text-align: center;">
+            <a href="{{ url_for('formulaire_objectif') }}" style="background: rgba(255,255,255,0.2); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; transition: all 0.3s ease; font-size: 1.5em; font-weight: bold;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'" title="{{ t('new_objective') }}">+</a>
+        </div>
         <div class="archives-link">
             <a href="{{ url_for('archives') }}">🏆 {{ t('view_completed_objectives_archives') }}</a>
         </div>
