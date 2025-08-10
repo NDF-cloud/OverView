@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registre de Caisse - Export PDF</title>
+    <style>
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            color: #333;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #666;
+            margin: 0;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            flex: 1;
+        }
+
+        .stat h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .stat p {
+            margin: 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .stat.entrees p {
+            color: #28a745;
+        }
+
+        .stat.sorties p {
+            color: #dc3545;
+        }
+
+        .stat.solde p {
+            color: #007bff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 12px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .entree {
+            color: #28a745;
+        }
+
+        .sortie {
+            color: #dc3545;
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .print-btn:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn no-print" onclick="window.print()">🖨️ Imprimer</button>
+
+    <div class="header">
+        <h1>💰 Registre de Caisse</h1>
+        <p>Date d'export: {{ moment().format('DD/MM/YYYY à HH:mm') }}</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat entrees">
+            <h3>Total Entrées</h3>
+            <p>{{ "{:,.0f}".format(total_entrees) }} FCFA</p>
+        </div>
+        <div class="stat sorties">
+            <h3>Total Sorties</h3>
+            <p>{{ "{:,.0f}".format(total_sorties) }} FCFA</p>
+        </div>
+        <div class="stat solde">
+            <h3>Solde Actuel</h3>
+            <p>{{ "{:,.0f}".format(solde) }} FCFA</p>
+        </div>
+    </div>
+
+    {% if operations %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Opération</th>
+                    <th>Prix Unitaire</th>
+                    <th>Quantité</th>
+                    <th>Prix Total</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for operation in operations %}
+                    <tr>
+                        <td>{{ operation.date_operation }}</td>
+                        <td>{{ operation.nom_operation }}</td>
+                        <td>{{ "{:,.0f}".format(operation.prix_unitaire) }} FCFA</td>
+                        <td>{{ operation.quantite }}</td>
+                        <td>{{ "{:,.0f}".format(operation.prix_total) }} FCFA</td>
+                        <td class="{{ operation.type_operation }}">
+                            {{ 'Entrée' if operation.type_operation == 'entree' else 'Sortie' }}
+                        </td>
+                        <td>{{ operation.description or '' }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="text-align: center; color: #666; font-style: italic;">
+            Aucune opération enregistrée
+        </p>
+    {% endif %}
+
+    <div class="footer">
+        <p>Document généré automatiquement par OverView</p>
+        <p>© {{ moment().format('YYYY') }} OverView - Tous droits réservés</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paramètres - OverView</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+            50% { background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); }
+            100% { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            color: white;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            animation: slideInDown 0.8s ease-out;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: white;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1em;
+        }
+
+        .back-link {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .settings-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: slideInUp 1s ease-out 0.2s both;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .category-selector {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .category-select {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102,126,234,0.2);
+            min-width: 250px;
+        }
+
+        .category-select:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102,126,234,0.3);
+        }
+
+        .param-section {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .param-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .param-section h2 {
+            color: #667eea;
+            font-size: 1.8em;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            background: rgba(255,255,255,0.95);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: #666;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102,126,234,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102,126,234,0.4);
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(108,117,125,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-secondary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(108,117,125,0.4);
+        }
+
+        .btn-secondary:hover::before {
+            left: 100%;
+        }
+
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            font-weight: 500;
+            animation: slideInRight 0.5s ease-out;
+            border-left: 4px solid;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .alert-error {
+            background-color: #fee;
+            color: #c53030;
+            border: 1px solid #feb2b2;
+            border-left-color: #e74c3c;
+        }
+
+        .alert-success {
+            background-color: #f0fff4;
+            color: #2f855a;
+            border: 1px solid #9ae6b4;
+            border-left-color: #27ae60;
+        }
+
+        .logout-section {
+            text-align: center;
+            margin-top: 40px;
+            padding: 30px;
+            border-radius: 15px;
+            background: rgba(231, 76, 60, 0.1);
+            border: 1px solid rgba(231, 76, 60, 0.2);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .logout-link {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(231,76,60,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logout-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .logout-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(231,76,60,0.5);
+        }
+
+        .logout-link:hover::before {
+            left: 100%;
+        }
+
+        /* Zone dangereuse */
+        .danger-zone {
+            border: 2px solid #dc3545;
+            background: rgba(220, 53, 69, 0.05);
+        }
+
+        .danger-zone h2 {
+            color: #dc3545;
+        }
+
+        .danger-warning {
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid #dc3545;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .danger-warning p {
+            color: #dc3545;
+            margin: 0;
+        }
+
+        .danger-actions {
+            margin-top: 20px;
+        }
+
+        .danger-action {
+            background: rgba(220, 53, 69, 0.05);
+            border: 1px solid #dc3545;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .danger-action h3 {
+            color: #dc3545;
+            margin-top: 0;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(220,53,69,0.3);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220,53,69,0.4);
+        }
+
+        /* Mode sombre */
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #ffffff;
+        }
+
+        body.dark-mode .settings-container {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ecf0f1;
+        }
+
+        body.dark-mode .form-group label {
+            color: #ecf0f1;
+        }
+
+        body.dark-mode .form-group input,
+        body.dark-mode .form-group select {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ecf0f1;
+            border-color: #34495e;
+        }
+
+        body.dark-mode .form-group small {
+            color: #bdc3c7;
+        }
+
+        body.dark-mode .param-section h2 {
+            color: #ecf0f1;
+            border-bottom-color: #667eea;
+        }
+
+        body.dark-mode .alert-success {
+            background-color: rgba(39, 174, 96, 0.1);
+            color: #9ae6b4;
+            border-color: #2f855a;
+        }
+
+        .dark-mode .logout-link {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 0;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .settings-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // Charger le thème au chargement de la page
+        document.addEventListener('DOMContentLoaded', function() {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'dark') {
+                document.body.classList.add('dark-mode');
+            }
+        });
+    </script>
+    <div class="container">
+        <a href="{{ url_for('app_with_tabs') }}" class="back-link">← Retour à l'accueil</a>
+
+        <div class="header">
+            <h1>⚙️ Paramètres</h1>
+            <p>Gérez vos préférences OverView</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-messages">
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <div class="settings-container">
+            <!-- Sélecteur de catégorie -->
+            <div class="category-selector">
+                <select id="category-select" class="category-select">
+                    <option value="securite">🔐 Sécurité</option>
+                    <option value="personnalisation">🎨 Personnalisation</option>
+                    <option value="compte-rebours">⏰ Compte à Rebours</option>
+                    <option value="notifications">🔔 Notifications</option>
+                    <option value="gestion-donnees">🗑️ Gestion des Données</option>
+                    <option value="confidentialite">🔒 Confidentialité</option>
+                    <option value="danger-zone">⚠️ Zone Dangereuse</option>
+                </select>
+            </div>
+
+            <!-- CATÉGORIE : SÉCURITÉ -->
+            <div id="securite" class="param-section active">
+                <h2>🔐 Sécurité</h2>
+                <form action="{{ url_for('update_password') }}" method="post">
+                    <div class="form-group">
+                        <label for="ancien_mdp">Ancien Mot de Passe</label>
+                        <input type="password" name="ancien_mdp" id="ancien_mdp" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nouveau_mdp">Nouveau Mot de Passe</label>
+                        <input type="password" name="nouveau_mdp" id="nouveau_mdp" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Mettre à jour</button>
+                </form>
+            </div>
+
+            <!-- CATÉGORIE : PERSONNALISATION -->
+            <div id="personnalisation" class="param-section">
+                <h2>🎨 Personnalisation</h2>
+                <div class="form-group">
+                    <label>Mode d'affichage</label>
+                    <button id="theme-toggle" class="btn-secondary">Activer le Mode Nuit</button>
+                    <small>Changer le thème de l'interface</small>
+                </div>
+
+                <form action="{{ url_for('update_display_settings') }}" method="post">
+                    <div class="form-group">
+                        <label for="display_progress">Afficher la progression</label>
+                        <select name="display_progress" id="display_progress">
+                            <option value="true" {% if session.get('display_progress', True) %}selected{% endif %}>Oui</option>
+                            <option value="false" {% if not session.get('display_progress', True) %}selected{% endif %}>Non</option>
+                        </select>
+                        <small>Afficher les barres de progression pour les objectifs</small>
+                    </div>
+                    <button type="submit" class="btn-primary">Sauvegarder</button>
+                </form>
+            </div>
+
+            <!-- CATÉGORIE : COMPTE À REBOURS -->
+            <div id="compte-rebours" class="param-section">
+                <h2>⏰ Compte à Rebours</h2>
+                <form action="{{ url_for('update_countdown_settings') }}" method="post">
+                    <div class="form-group">
+                        <label for="countdown_update_interval">Intervalle de mise à jour (secondes)</label>
+                        <input type="number" name="countdown_update_interval" id="countdown_update_interval" value="{{ session.get('countdown_update_interval', 60) }}" min="30" max="300" required>
+                        <small>Fréquence de mise à jour des compteurs à rebours (30-300 secondes)</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="countdown_warning_days">Jours d'avertissement</label>
+                        <input type="number" name="countdown_warning_days" id="countdown_warning_days" value="{{ session.get('countdown_warning_days', 3) }}" min="1" max="7" required>
+                        <small>Nombre de jours avant la date limite pour afficher l'alerte orange</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="show_countdown_on_list">Afficher les compteurs à rebours</label>
+                        <select name="show_countdown_on_list" id="show_countdown_on_list">
+                            <option value="true" {% if session.get('show_countdown_on_list', True) %}selected{% endif %}>Oui</option>
+                            <option value="false" {% if not session.get('show_countdown_on_list', True) %}selected{% endif %}>Non</option>
+                        </select>
+                        <small>Afficher les compteurs à rebours sur les pages principales</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="show_urgency_charts">Afficher les diagrammes d'urgence</label>
+                        <select name="show_urgency_charts" id="show_urgency_charts">
+                            <option value="true" {% if session.get('show_urgency_charts', True) %}selected{% endif %}>Oui</option>
+                            <option value="false" {% if not session.get('show_urgency_charts', True) %}selected{% endif %}>Non</option>
+                        </select>
+                        <small>Afficher les petits diagrammes circulaires d'urgence</small>
+                    </div>
+                    <button type="submit" class="btn-primary">Sauvegarder</button>
+                </form>
+            </div>
+
+            <!-- CATÉGORIE : NOTIFICATIONS -->
+            <div id="notifications" class="param-section">
+                <h2>🔔 Notifications</h2>
+                <form action="{{ url_for('update_notification_settings') }}" method="post">
+                    <div class="form-group">
+                        <label for="email_notifications">Notifications par email</label>
+                        <select name="email_notifications" id="email_notifications">
+                            <option value="true" {% if session.get('email_notifications', True) %}selected{% endif %}>Activées</option>
+                            <option value="false" {% if not session.get('email_notifications', True) %}selected{% endif %}>Désactivées</option>
+                        </select>
+                        <small>Recevoir des notifications par email pour les échéances</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="notification_advance_days">Alerte avancée (jours)</label>
+                        <input type="number" name="notification_advance_days" id="notification_advance_days" value="{{ session.get('notification_advance_days', 1) }}" min="0" max="7" required>
+                        <small>Nombre de jours avant l'échéance pour recevoir une notification</small>
+                    </div>
+                    <button type="submit" class="btn-primary">Sauvegarder</button>
+                </form>
+            </div>
+
+            <!-- CATÉGORIE : GESTION DES DONNÉES -->
+            <div id="gestion-donnees" class="param-section">
+                <h2>🗑️ Gestion des Données</h2>
+                <form action="{{ url_for('update_deletion_settings') }}" method="post">
+                    <div class="form-group">
+                        <label for="auto_archive_completed">Archiver automatiquement</label>
+                        <select name="auto_archive_completed" id="auto_archive_completed">
+                            <option value="true" {% if session.get('auto_archive_completed', True) %}selected{% endif %}>Oui</option>
+                            <option value="false" {% if not session.get('auto_archive_completed', True) %}selected{% endif %}>Non</option>
+                        </select>
+                        <small>Archiver automatiquement les objectifs et tâches terminés</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm_deletions">Confirmation de suppression</label>
+                        <select name="confirm_deletions" id="confirm_deletions">
+                            <option value="true" {% if session.get('confirm_deletions', True) %}selected{% endif %}>Demander confirmation</option>
+                            <option value="false" {% if not session.get('confirm_deletions', True) %}selected{% endif %}>Suppression directe</option>
+                        </select>
+                        <small>Demander une confirmation avant de supprimer des éléments</small>
+                    </div>
+                    <button type="submit" class="btn-primary">Sauvegarder</button>
+                </form>
+            </div>
+
+            <!-- CATÉGORIE : CONFIDENTIALITÉ -->
+            <div id="confidentialite" class="param-section">
+                <h2>🔒 Confidentialité</h2>
+                <form action="{{ url_for('update_balance_privacy') }}" method="post">
+                    <div class="form-group">
+                        <label for="balance_privacy">Masquer les soldes</label>
+                        <select name="balance_privacy" id="balance_privacy">
+                            <option value="false" {% if not balance_privacy %}selected{% endif %}>Afficher les soldes</option>
+                            <option value="true" {% if balance_privacy %}selected{% endif %}>Masquer les soldes</option>
+                        </select>
+                        <small>Masquer les montants des soldes dans le dashboard et les rapports (les soldes des épargnes restent visibles)</small>
+                    </div>
+                    <button type="submit" class="btn-primary">Sauvegarder</button>
+                </form>
+            </div>
+
+            <!-- CATÉGORIE : SUPPRESSION DU COMPTE -->
+            <div id="danger-zone" class="param-section danger-zone">
+                <h2>⚠️ Zone Dangereuse</h2>
+                <div class="danger-warning">
+                    <p><strong>Attention :</strong> Les actions suivantes sont irréversibles et supprimeront définitivement toutes vos données.</p>
+                </div>
+
+                <div class="danger-actions">
+                    <div class="danger-action">
+                        <h3>🗑️ Supprimer mon compte</h3>
+                        <p>Cette action supprimera définitivement votre compte et toutes vos données (objectifs, tâches, événements, etc.).</p>
+                        <button type="button" class="btn-danger" onclick="confirmDeleteAccount()">
+                            <i class="fas fa-trash"></i> Supprimer définitivement mon compte
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="logout-section">
+                <a href="{{ url_for('logout') }}" class="logout-link">🚪 Se déconnecter</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Gestion du sélecteur de catégories
+        document.addEventListener('DOMContentLoaded', function() {
+            const categorySelect = document.getElementById('category-select');
+            const sections = document.querySelectorAll('.param-section');
+
+            function showSection(category) {
+                sections.forEach(section => {
+                    section.classList.remove('active');
+                });
+
+                const targetSection = document.getElementById(category);
+                if (targetSection) {
+                    targetSection.classList.add('active');
+                }
+            }
+
+            categorySelect.addEventListener('change', function() {
+                showSection(this.value);
+            });
+
+            // Initialiser le bouton theme-toggle
+            const themeToggle = document.getElementById('theme-toggle');
+            if (themeToggle) {
+                const theme = localStorage.getItem('theme');
+                themeToggle.textContent = theme === 'dark' ? 'Désactiver le Mode Nuit' : 'Activer le Mode Nuit';
+
+                themeToggle.addEventListener('click', () => {
+                    document.body.classList.toggle('dark-mode');
+                    let theme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+                    themeToggle.textContent = theme === 'dark' ? 'Désactiver le Mode Nuit' : 'Activer le Mode Nuit';
+                    localStorage.setItem('theme', theme);
+                });
+            }
+        });
+
+        // Fonction de confirmation pour la suppression du compte
+        function confirmDeleteAccount() {
+            const password = prompt('⚠️ ATTENTION : Cette action est IRREVERSIBLE !\n\nPour confirmer la suppression définitive de votre compte, veuillez entrer votre mot de passe :');
+
+            if (password === null) {
+                return; // Utilisateur a annulé
+            }
+
+            if (password.trim() === '') {
+                alert('❌ Veuillez entrer votre mot de passe pour confirmer la suppression.');
+                return;
+            }
+
+            // Demander une confirmation finale
+            const finalConfirmation = confirm('🚨 CONFIRMATION FINALE\n\nÊtes-vous ABSOLUMENT sûr de vouloir supprimer définitivement votre compte ?\n\nCette action supprimera :\n• Tous vos objectifs d\'épargne\n• Toutes vos tâches\n• Tous vos événements\n• Toutes vos données personnelles\n\nCette action est IRREVERSIBLE !');
+
+            if (finalConfirmation) {
+                // Créer un formulaire temporaire pour envoyer la requête
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{{ url_for("supprimer_compte") }}';
+
+                const passwordInput = document.createElement('input');
+                passwordInput.type = 'hidden';
+                passwordInput.name = 'password';
+                passwordInput.value = password;
+
+                form.appendChild(passwordInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    </script>
+</body>
+</html>

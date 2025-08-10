@@ -1,0 +1,476 @@
+<!-- Contenu de l'onglet Notifications -->
+<div class="tab-content active">
+    <!-- Bouton Home pour retourner au Dashboard -->
+    <div style="margin-bottom: 20px;">
+        <button id="homeButton" class="btn btn-primary" style="padding: 8px 16px; border-radius: 5px; border: none; background: #667eea; color: white; cursor: pointer;">
+            <i class="fas fa-home"></i> Accueil
+        </button>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">🔔 Centre de Notifications</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Liste des notifications dynamiques -->
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Notifications Récentes</h5>
+                    <button id="markAllReadBtn" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-check-double"></i> Tout marquer comme lu
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- Objectifs proches de la fin -->
+                    {% if notifications.objectifs_proches %}
+                        <div class="notification-item border-bottom py-3">
+                            <div class="d-flex align-items-start">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-bullseye text-success fa-2x"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h6 class="mb-1">🎯 Objectifs proches de la fin</h6>
+                                        <span class="badge bg-success">Nouveau</span>
+                                    </div>
+                                    <p class="text-muted mb-2">Vous avez {{ notifications.objectifs_proches|length }} objectif(s) qui approche(nt) de votre objectif !</p>
+                                    <small class="text-muted">Il y a quelques minutes</small>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Tâches en retard -->
+                    {% if notifications.taches_retard %}
+                        <div class="notification-item border-bottom py-3">
+                            <div class="d-flex align-items-start">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-exclamation-triangle text-warning fa-2x"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h6 class="mb-1">⚠️ Tâches en retard</h6>
+                                        <span class="badge bg-warning">Urgent</span>
+                                    </div>
+                                    <p class="text-muted mb-2">Vous avez {{ notifications.taches_retard|length }} tâche(s) en retard depuis plus d'une semaine.</p>
+                                    <small class="text-muted">Il y a quelques minutes</small>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Événements à venir -->
+                    {% if notifications.evenements_proches %}
+                        <div class="notification-item border-bottom py-3">
+                            <div class="d-flex align-items-start">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-calendar-alt text-info fa-2x"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h6 class="mb-1">📅 Événements à venir</h6>
+                                        <span class="badge bg-info">Proche</span>
+                                    </div>
+                                    <p class="text-muted mb-2">Vous avez {{ notifications.evenements_proches|length }} événement(s) dans les 7 prochains jours.</p>
+                                    <small class="text-muted">Il y a quelques minutes</small>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Message si aucune notification -->
+                    {% if not notifications.objectifs_proches and not notifications.taches_retard and not notifications.evenements_proches %}
+                        <div class="notification-item py-3">
+                            <div class="d-flex align-items-start">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-check-circle text-success fa-2x"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-1">✅ Tout va bien !</h6>
+                                    <p class="text-muted mb-2">Aucune notification urgente pour le moment. Continuez comme ça !</p>
+                                    <small class="text-muted">Maintenant</small>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Notifications statiques d'aide -->
+                    <div class="notification-item border-bottom py-3">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-info-circle text-info fa-2x"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1">💡 Conseil du jour</h6>
+                                <p class="text-muted mb-2">Définissez des objectifs d'épargne réalistes et suivez régulièrement vos progrès.</p>
+                                <small class="text-muted">Il y a 1 heure</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Paramètres des notifications -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Paramètres</h5>
+                </div>
+                <div class="card-body">
+                    <form id="notificationSettingsForm">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="notifObjectifs" name="notif_objectifs" 
+                                   {% if session.get('notif_objectifs', True) %}checked{% endif %}>
+                            <label class="form-check-label" for="notifObjectifs">
+                                Notifications d'objectifs
+                            </label>
+                        </div>
+
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="notifTaches" name="notif_taches" 
+                                   {% if session.get('notif_taches', True) %}checked{% endif %}>
+                            <label class="form-check-label" for="notifTaches">
+                                Notifications de tâches
+                            </label>
+                        </div>
+
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="notifEvenements" name="notif_evenements" 
+                                   {% if session.get('notif_evenements', True) %}checked{% endif %}>
+                            <label class="form-check-label" for="notifEvenements">
+                                Notifications d'événements
+                            </label>
+                        </div>
+
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="notifRapports" name="notif_rapports" 
+                                   {% if session.get('notif_rapports', True) %}checked{% endif %}>
+                            <label class="form-check-label" for="notifRapports">
+                                Rapports hebdomadaires
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-sm w-100">Sauvegarder</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Statistiques des notifications -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Statistiques</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Notifications lues</span>
+                        <span class="badge bg-success">{{ (notifications.objectifs_proches|length + notifications.taches_retard|length + notifications.evenements_proches|length) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Notifications non lues</span>
+                        <span class="badge bg-warning">0</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Total</span>
+                        <span class="badge bg-primary">{{ (notifications.objectifs_proches|length + notifications.taches_retard|length + notifications.evenements_proches|length) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.notification-item:hover {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.notification-item.notification-read {
+    opacity: 0.7;
+    background-color: #f8f9fa;
+}
+
+.notification-item.notification-read:hover {
+    background-color: #e9ecef;
+}
+
+.form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+.btn-primary {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+.btn-primary:hover {
+    background-color: #5a6fd8;
+    border-color: #5a6fd8;
+}
+
+.btn-outline-success {
+    border-color: #28a745;
+    color: #28a745;
+}
+
+.btn-outline-success:hover {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+.btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.badge {
+    font-size: 0.75em;
+    padding: 0.35em 0.65em;
+}
+
+.card-header .btn {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Charger les préférences actuelles depuis la session
+    loadCurrentPreferences();
+    
+    // Gestion du bouton Home
+    document.getElementById('homeButton').addEventListener('click', function() {
+        // Retourner au dashboard
+        window.location.href = '/app';
+    });
+
+    // Gestion du bouton "Tout marquer comme lu"
+    document.getElementById('markAllReadBtn').addEventListener('click', function() {
+        const btn = this;
+        const originalText = btn.innerHTML;
+        
+        // Désactiver le bouton et afficher un indicateur de chargement
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traitement...';
+        
+        // Envoyer la requête pour marquer toutes les notifications comme lues
+        fetch('/mark_all_notifications_read', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showNotification('✅ Toutes les notifications ont été marquées comme lues !', 'success');
+                
+                // Mettre à jour l'interface
+                updateNotificationInterface();
+                
+                // Mettre à jour le compteur de notifications avec la valeur retournée par le serveur
+                if (data.new_count !== undefined) {
+                    updateNotificationCountWithValue(data.new_count);
+                }
+            } else {
+                showNotification(`❌ Erreur: ${data.message || 'Erreur lors du traitement'}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showNotification('❌ Erreur de connexion lors du traitement', 'error');
+        })
+        .finally(() => {
+            // Réactiver le bouton
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        });
+    });
+
+    // Gestion de la sauvegarde des paramètres
+    document.getElementById('notificationSettingsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Désactiver le bouton pendant la sauvegarde
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sauvegarde...';
+        
+        const formData = new FormData();
+        formData.append('notif_objectifs', document.getElementById('notifObjectifs').checked);
+        formData.append('notif_taches', document.getElementById('notifTaches').checked);
+        formData.append('notif_evenements', document.getElementById('notifEvenements').checked);
+        formData.append('notif_rapports', document.getElementById('notifRapports').checked);
+
+        // Envoyer les paramètres au backend
+        fetch('/update_notification_preferences', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showNotification('✅ Paramètres sauvegardés avec succès !', 'success');
+                // Mettre à jour la session côté client
+                updateNotificationCount();
+            } else {
+                showNotification(`❌ Erreur: ${data.message}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showNotification('❌ Erreur de connexion lors de la sauvegarde', 'error');
+        })
+        .finally(() => {
+            // Réactiver le bouton
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        });
+    });
+
+    // Fonction pour mettre à jour le compteur de notifications
+    function updateNotificationCount() {
+        // Mettre à jour le compteur dans la barre de navigation (mettre à 0)
+        updateNotificationCountWithValue(0);
+        
+        // Mettre à jour l'interface des notifications
+        updateNotificationInterface();
+    }
+
+    // Fonction pour mettre à jour le compteur de notifications avec une valeur spécifique
+    function updateNotificationCountWithValue(newCount) {
+        const notificationTab = document.querySelector('.nav-tab[data-tab="notifications"]');
+        if (notificationTab) {
+            // Supprimer l'ancien badge s'il existe
+            const oldBadge = notificationTab.querySelector('.badge');
+            if (oldBadge) {
+                oldBadge.remove();
+            }
+            
+            // Si il y a encore des notifications, afficher le nouveau compteur
+            if (newCount > 0) {
+                const newBadge = document.createElement('span');
+                newBadge.className = 'badge bg-warning ms-1';
+                newBadge.textContent = newCount;
+                notificationTab.appendChild(newBadge);
+            }
+            
+            console.log(`Compteur de notifications mis à jour: ${newCount}`);
+        }
+    }
+
+    // Fonction pour mettre à jour l'interface des notifications
+    function updateNotificationInterface() {
+        // Changer le style des notifications pour indiquer qu'elles sont lues
+        const notificationItems = document.querySelectorAll('.notification-item');
+        notificationItems.forEach(item => {
+            // Retirer les badges "Nouveau", "Urgent", "Proche"
+            const badges = item.querySelectorAll('.badge');
+            badges.forEach(badge => {
+                badge.remove();
+            });
+            
+            // Ajouter une classe pour indiquer qu'elles sont lues
+            item.classList.add('notification-read');
+            
+            // Changer l'opacité pour indiquer qu'elles sont lues
+            item.style.opacity = '0.7';
+        });
+        
+        // Désactiver le bouton "Tout marquer comme lu"
+        const markAllReadBtn = document.getElementById('markAllReadBtn');
+        if (markAllReadBtn) {
+            markAllReadBtn.disabled = true;
+            markAllReadBtn.innerHTML = '<i class="fas fa-check"></i> Toutes lues';
+            markAllReadBtn.classList.remove('btn-outline-success');
+            markAllReadBtn.classList.add('btn-success');
+        }
+        
+        // Mettre à jour les statistiques
+        updateNotificationStats();
+    }
+    
+    // Fonction pour mettre à jour les statistiques des notifications
+    function updateNotificationStats() {
+        const statsContainer = document.querySelector('.card-body');
+        if (statsContainer) {
+            const statsSection = statsContainer.parentElement.parentElement.querySelector('.col-md-4 .card:last-child .card-body');
+            if (statsSection) {
+                const unreadBadge = statsSection.querySelector('.badge.bg-warning');
+                if (unreadBadge) {
+                    unreadBadge.textContent = '0';
+                    unreadBadge.classList.remove('bg-warning');
+                    unreadBadge.classList.add('bg-success');
+                }
+            }
+        }
+    }
+
+    // Fonction pour charger les préférences actuelles
+    function loadCurrentPreferences() {
+        // Les préférences sont déjà chargées via Jinja2 dans le HTML
+        // Cette fonction peut être utilisée pour des mises à jour futures
+        console.log('Préférences de notifications chargées depuis la session');
+    }
+
+    // Fonction pour afficher les notifications
+    function showNotification(message, type) {
+        // Supprimer les notifications existantes
+        const existingNotifications = document.querySelectorAll('.notification-toast');
+        existingNotifications.forEach(notif => notif.remove());
+        
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed notification-toast`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
+        notification.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                <span>${message}</span>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Animation d'entrée
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            notification.style.transition = 'all 0.3s ease';
+            notification.style.opacity = '1';
+            notification.style.transform = 'translateX(0)';
+        }, 10);
+        
+        // Auto-suppression après 5 secondes
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            }
+        }, 5000);
+    }
+});
+</script>

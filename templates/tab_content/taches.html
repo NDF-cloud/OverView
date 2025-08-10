@@ -1,0 +1,246 @@
+<!-- Contenu de l'onglet Tâches -->
+<div class="tab-content active">
+    <!-- Bouton Home pour retourner au Dashboard -->
+    <div style="margin-bottom: 20px;">
+        <button id="homeButton" class="btn btn-primary" style="padding: 8px 16px; border-radius: 5px; border: none; background: #667eea; color: white; cursor: pointer;">
+            <i class="fas fa-home"></i> Accueil
+        </button>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                                 <h2>📋 Mes Tâches</h2>
+                <a href="{{ url_for('formulaire_tache') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nouvelle Tâche
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Diagramme de progression globale avec graphique circulaire -->
+    {% if total_taches > 0 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📊 Progression globale des tâches</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="progress mb-3" style="height: 25px;">
+                                <div class="progress-bar {% if progression_globale == 100 %}bg-success{% elif progression_globale > 50 %}bg-info{% else %}bg-warning{% endif %}" role="progressbar"
+                                     style="width: {{ progression_globale }}%;"
+                                     aria-valuenow="{{ progression_globale }}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                    {{ "%.1f"|format(progression_globale) }}%
+                                </div>
+                            </div>
+                            <div class="stats-container">
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <div class="stat-item">
+                                            <span class="stat-number text-success">{{ taches_terminees }}</span>
+                                            <span class="stat-label">Terminées</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="stat-item">
+                                            <span class="stat-number text-warning">{{ total_taches - taches_terminees }}</span>
+                                            <span class="stat-label">En cours</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="stat-item">
+                                            <span class="stat-number text-primary">{{ total_taches }}</span>
+                                            <span class="stat-label">Total</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-center" style="height: 250px; overflow: hidden;">
+                                <div style="position: relative; height: 200px; width: 200px; margin: 0 auto;">
+                                    <canvas id="tasksChart" width="180" height="180" style="max-width: 100%; max-height: 100%;"></canvas>
+                                </div>
+                                <div class="mt-3">
+                                    <div class="d-flex justify-content-center align-items-center gap-3">
+                                        <div class="d-flex align-items-center gap-1">
+                                            <div style="width: 12px; height: 12px; background-color: #28a745; border-radius: 2px;"></div>
+                                            <small class="text-muted">Terminées</small>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-1">
+                                            <div style="width: 12px; height: 12px; background-color: #ffc107; border-radius: 2px;"></div>
+                                            <small class="text-muted">En cours</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if taches %}
+        <div class="row">
+            {% for tache in taches %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm {% if tache.termine %}border-success{% endif %}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h5 class="card-title mb-0 {% if tache.termine %}text-decoration-line-through text-muted{% endif %}">
+                                    {{ tache.titre }}
+                                </h5>
+                                <span class="badge {% if tache.termine %}bg-success{% else %}bg-warning{% endif %}">
+                                    {% if tache.termine %}Terminée{% else %}En cours{% endif %}
+                                </span>
+                            </div>
+
+                            {% if tache.description %}
+                                <p class="card-text text-muted mb-3">{{ tache.description }}</p>
+                            {% endif %}
+
+                            <!-- Barre de progression individuelle pour chaque tâche -->
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <small class="text-muted">Progression</small>
+                                    <small class="text-muted">
+                                        {{ "%.0f"|format(tache.progression) }}%
+                                    </small>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar {% if tache.progression == 100 %}bg-success{% elif tache.progression > 50 %}bg-info{% else %}bg-warning{% endif %}"
+                                         role="progressbar"
+                                         style="width: {{ tache.progression }}%;"
+                                         aria-valuenow="{{ tache.progression }}"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100">
+                                    </div>
+                                </div>
+                                <small class="text-muted">
+                                    {{ tache.etapes_terminees }} / {{ tache.total_etapes }} étapes terminées
+                                </small>
+                                <!-- Debug info -->
+                                <small class="text-muted d-block mt-1">
+                                    Debug: Tâche {{ tache.id }} - Terminée: {{ tache.termine }} - Progression: {{ tache.progression }}
+                                </small>
+                            </div>
+
+                            {% if tache.date_limite %}
+                                <div class="mb-3">
+                                    <small class="text-muted">Date limite</small>
+                                    <div class="fw-bold">{{ tache.date_limite }}</div>
+                                </div>
+                            {% endif %}
+
+                            <div class="d-flex justify-content-between mt-auto">
+                                <a href="{{ url_for('tache_detail', tache_id=tache.id) }}"
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye"></i> Détails
+                                </a>
+                                <a href="{{ url_for('formulaire_tache', tache_id=tache.id) }}"
+                                   class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-edit"></i> Modifier
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="fas fa-tasks fa-4x text-muted"></i>
+            </div>
+            <h4 class="text-muted mb-3">Aucune tâche</h4>
+            <p class="text-muted mb-4">Commencez par créer votre première tâche</p>
+            <a href="{{ url_for('formulaire_tache') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Créer une tâche
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Script pour le diagramme circulaire -->
+{% if total_taches > 0 %}
+<script>
+// Script ultra-simplifié pour forcer l'affichage du graphique
+console.log('🎯 SCRIPT GRAPHIQUE DÉMARRÉ');
+
+// Attendre que Chart.js soit disponible
+function waitForChart() {
+    if (typeof Chart === 'undefined') {
+        console.log('⏳ En attente de Chart.js...');
+        setTimeout(waitForChart, 100);
+        return;
+    }
+
+    console.log('✅ Chart.js trouvé, version:', Chart.version);
+    createSimpleChart();
+}
+
+function createSimpleChart() {
+    console.log('🎨 Création du graphique simple...');
+
+    const canvas = document.getElementById('tasksChart');
+    if (!canvas) {
+        console.error('❌ Canvas non trouvé');
+        return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+        console.error('❌ Contexte 2D impossible');
+        return;
+    }
+
+    // Données simples
+    const terminées = {{ taches_terminees }};
+    const enCours = {{ total_taches - taches_terminees }};
+
+    console.log('📊 Données:', { terminées, enCours });
+
+    // Configuration minimale
+    const chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Terminées', 'En cours'],
+            datasets: [{
+                data: [terminées, enCours],
+                backgroundColor: ['#28a745', '#ffc107']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            cutout: '60%'
+        }
+    });
+
+    console.log('✅ Graphique créé !');
+    window.tasksChart = chart;
+}
+
+// Démarrer immédiatement
+waitForChart();
+
+// Script pour vérifier si une tâche a été modifiée et forcer la mise à jour
+document.addEventListener('DOMContentLoaded', function() {
+    // Vérifier si une tâche a été modifiée
+    if (localStorage.getItem('tacheModifiee') === 'true') {
+        console.log('🔄 Tâche modifiée détectée, rechargement de la page...');
+        localStorage.removeItem('tacheModifiee');
+        window.location.reload();
+    }
+});
+</script>
+{% endif %}
