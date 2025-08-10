@@ -1,0 +1,89 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+simple-env/
+venv_new/
+
+# Flask
+instance/
+.webassets-cache
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment variables
+.env
+.venv
+env/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Backup files
+backup_git/
+*.bak
+*.backup
+
+# Temporary files
+*.tmp
+*.temp
+
+# Flask and Jinja source code (not needed in production)
+flask-3.1.1/
+jinja-3.1.2/
+
+# Python installer
+python-full.exe
+python-installer.exe
+python-portable/
+python-portable.zip
+
+# Test files
+test_*.py
+*_test.py
+
+# Documentation and reference files
+*.md
+*.html
+*.rst
+*.txt
