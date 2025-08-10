@@ -2,8 +2,8 @@ services:
   - type: web
     name: mon-app-epargne
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    buildCommand: poetry install --no-dev
+    startCommand: poetry run gunicorn app:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.13.4
