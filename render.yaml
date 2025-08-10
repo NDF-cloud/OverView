@@ -2,8 +2,18 @@ services:
   - type: web
     name: mon-app-epargne
     env: python
-    buildCommand: poetry install --no-dev --no-interaction
-    startCommand: poetry run gunicorn app:app --bind 0.0.0.0:$PORT
+    buildCommand: |
+      if command -v poetry &> /dev/null; then
+        poetry install --no-dev --no-interaction
+      else
+        pip install -r requirements.txt
+      fi
+    startCommand: |
+      if command -v poetry &> /dev/null; then
+        poetry run gunicorn app:app --bind 0.0.0.0:$PORT
+      else
+        gunicorn app:app --bind 0.0.0.0:$PORT
+      fi
     envVars:
       - key: PYTHON_VERSION
         value: 3.13.4
