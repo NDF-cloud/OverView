@@ -1,0 +1,10 @@
+{
+  "name": "OverView Épargne",      /* NOUVEAU NOM COMPLET */
+  "short_name": "OverView",        /* NOUVEAU NOM COURT */
+  "description": "Mon application de gestion d'épargne personnelle - OverViez",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f7f6",
+  "theme_color": "#005f73",
+  "icons": [ ... ]
+}

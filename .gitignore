@@ -87,3 +87,9 @@ test_*.py
 *.html
 *.rst
 *.txt
+
+# Exceptions for important files
+!runtime.txt
+!requirements.txt
+!.python-version
+!Procfile
